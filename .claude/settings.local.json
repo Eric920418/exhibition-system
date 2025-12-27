@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm add:*)",
+      "Bash(pnpm build:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(npm view:*)",
+      "Bash(mv:*)",
+      "Bash(timeout 20 pnpm dev:*)",
+      "Bash(curl:*)",
+      "Bash(lsof:*)",
+      "Bash(pkill:*)",
+      "Bash(ls:*)",
+      "Bash(head:*)",
+      "Bash(redis-cli ping:*)",
+      "Bash(python3:*)",
+      "Bash(pnpm test:run:*)",
+      "Bash(npx playwright install:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

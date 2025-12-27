@@ -1,0 +1,51 @@
+/* Craft.js 拖放視覺樣式 */
+
+/* 選中的組件 */
+[data-selected="true"] {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px;
+}
+
+/* 懸停的組件 */
+[data-hovered="true"] {
+  outline: 1px dashed #3b82f6 !important;
+  outline-offset: 1px;
+}
+
+/* 可拖動的元素游標 */
+[draggable="true"] {
+  cursor: move !important;
+}
+
+/* 拖動中的元素 */
+.craftjs-dragging {
+  opacity: 0.5;
+  cursor: grabbing !important;
+}
+
+/* 放置目標區域 */
+.craftjs-drop-target {
+  background-color: rgba(59, 130, 246, 0.05);
+  border: 2px dashed #3b82f6;
+}
+
+/* 工具箱按鈕懸停效果 */
+.craftjs-toolbox-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 編輯器畫布 */
+.craftjs-renderer {
+  min-height: 400px;
+}
+
+/* 空容器提示 */
+[data-cy="empty-container"] {
+  border: 2px dashed #d1d5db;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+}

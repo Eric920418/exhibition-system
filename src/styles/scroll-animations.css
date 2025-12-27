@@ -1,0 +1,146 @@
+/**
+ * Scroll-Driven Animations
+ * 基於 CSS Scroll-Driven Animations API
+ * 使用方式：在元素上加上 data-animate="動畫名稱"
+ *
+ * 瀏覽器支援：Chrome 115+, Edge 115+ (2023年8月後)
+ * Safari 需等待支援或使用 polyfill
+ */
+
+/* ===== 1. 淡入向上滑（最常用，適合作品卡片） ===== */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-animate="fade-in-up"] {
+  animation: fade-in-up linear both;
+  animation-timeline: view();
+  animation-range: entry 0% cover 30%;
+}
+
+/* ===== 2. 縮放揭示（適合圖片和海報） ===== */
+@keyframes scale-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+[data-animate="scale-reveal"] {
+  animation: scale-reveal linear both;
+  animation-timeline: view();
+  animation-range: entry 0% cover 40%;
+}
+
+/* ===== 3. 滑入旋轉（有趣且吸睛） ===== */
+@keyframes slide-rotate {
+  from {
+    opacity: 0;
+    transform: translateX(-100px) rotate(-10deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg);
+  }
+}
+
+[data-animate="slide-rotate"] {
+  animation: slide-rotate linear both;
+  animation-timeline: view();
+  animation-range: entry 0% cover 40%;
+}
+
+/* ===== 4. 視差效果（展覽最愛，適合背景圖） ===== */
+@keyframes parallax {
+  from {
+    transform: translateY(-20%);
+  }
+  to {
+    transform: translateY(20%);
+  }
+}
+
+[data-animate="parallax"] {
+  animation: parallax linear both;
+  animation-timeline: view();
+  animation-range: entry 0% exit 100%;
+}
+
+/* ===== 5. 手風琴式展開（適合文字區塊） ===== */
+@keyframes accordion {
+  from {
+    opacity: 0;
+    transform: scaleY(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+[data-animate="accordion"] {
+  transform-origin: top;
+  animation: accordion linear both;
+  animation-timeline: view();
+  animation-range: entry 0% cover 35%;
+}
+
+/* ===== 6. 模糊聚焦（高級感，適合重點區域） ===== */
+@keyframes blur-in {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+[data-animate="blur-in"] {
+  animation: blur-in linear both;
+  animation-timeline: view();
+  animation-range: entry 0% cover 40%;
+}
+
+/* ===== 延遲變體（同組元素錯開出場） ===== */
+[data-animate-delay="1"] {
+  animation-delay: 0.1s;
+}
+
+[data-animate-delay="2"] {
+  animation-delay: 0.2s;
+}
+
+[data-animate-delay="3"] {
+  animation-delay: 0.3s;
+}
+
+[data-animate-delay="4"] {
+  animation-delay: 0.4s;
+}
+
+[data-animate-delay="5"] {
+  animation-delay: 0.5s;
+}
+
+/* ===== Polyfill 提示（瀏覽器不支援時的備用樣式） ===== */
+@supports not (animation-timeline: view()) {
+  [data-animate] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    animation: none !important;
+  }
+}

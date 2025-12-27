@@ -1,0 +1,569 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== 核心表 ====================
+
+// 使用者
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String   @db.VarChar(100)
+  role         UserRole
+  avatarUrl    String?  @map("avatar_url")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  invitationsCreated   Invitation[]         @relation("InvitedBy")
+  exhibitionsCreated   Exhibition[]         @relation("CreatedBy")
+  exhibitionMembers    ExhibitionMember[]
+  teamsLed             Team[]
+  artworksCreated      Artwork[]
+  artworkVersions      ArtworkVersion[]
+  documents            Document[]
+  cardsCreated         Card[]
+  cardAssignments      CardAssignment[]
+  cardComments         CardComment[]
+  siteTemplatesCreated SiteTemplate[]
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  CURATOR
+  TEAM_LEADER
+}
+
+// 邀請機制
+model Invitation {
+  id        String    @id @default(uuid())
+  email     String    @db.VarChar(255)
+  role      UserRole
+  token     String    @unique @db.VarChar(255)
+  invitedBy String?   @map("invited_by")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  inviter User? @relation("InvitedBy", fields: [invitedBy], references: [id], onDelete: SetNull)
+
+  @@index([token])
+  @@index([email])
+  @@map("invitations")
+}
+
+// ==================== 展覽主體 ====================
+
+// 展覽
+model Exhibition {
+  id          String           @id @default(uuid())
+  year        Int
+  name        String           @db.VarChar(255)
+  slug        String           @unique @db.VarChar(255)
+  description String?          @db.Text
+  startDate   DateTime         @map("start_date") @db.Date
+  endDate     DateTime         @map("end_date") @db.Date
+  status      ExhibitionStatus @default(DRAFT)
+  isActive    Boolean          @default(false) @map("is_active")
+  posterUrl   String?          @map("poster_url")
+  createdBy   String?          @map("created_by")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  creator        User?              @relation("CreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  members        ExhibitionMember[]
+  teams          Team[]
+  sponsors       Sponsor[]
+  venues         Venue[]
+  documents      Document[]
+  boards         Board[]
+  siteTemplates  SiteTemplate[]
+
+  @@index([year])
+  @@index([status])
+  @@index([isActive])
+  @@map("exhibitions")
+}
+
+enum ExhibitionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// 展覽成員
+model ExhibitionMember {
+  id           String   @id @default(uuid())
+  exhibitionId String   @map("exhibition_id")
+  userId       String   @map("user_id")
+  role         String   @db.VarChar(20)
+  joinedAt     DateTime @default(now()) @map("joined_at")
+
+  // Relations
+  exhibition Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([exhibitionId, userId])
+  @@index([exhibitionId])
+  @@index([userId])
+  @@map("exhibition_members")
+}
+
+// ==================== 作品與組別 ====================
+
+// 組別
+model Team {
+  id           String   @id @default(uuid())
+  exhibitionId String   @map("exhibition_id")
+  name         String   @db.VarChar(255)
+  slug         String   @db.VarChar(255)
+  leaderId     String?  @map("leader_id")
+  description  String?  @db.Text
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  exhibition          Exhibition           @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+  leader              User?                @relation(fields: [leaderId], references: [id], onDelete: SetNull)
+  members             TeamMember[]
+  artworks            Artwork[]
+  reservationConfig   ReservationConfig?
+  reservations        Reservation[]
+  currentServing      CurrentServing?
+
+  @@unique([exhibitionId, slug])
+  @@index([exhibitionId])
+  @@index([leaderId])
+  @@map("teams")
+}
+
+// 組員名單（不需帳號）
+model TeamMember {
+  id           String  @id @default(uuid())
+  teamId       String  @map("team_id")
+  name         String  @db.VarChar(100)
+  role         String? @db.VarChar(100)
+  displayOrder Int     @default(0) @map("display_order")
+
+  // Relations
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@map("team_members")
+}
+
+// 作品
+model Artwork {
+  id           String   @id @default(uuid())
+  teamId       String   @map("team_id")
+  title        String   @db.VarChar(255)
+  concept      String?  @db.Text
+  mediaUrls    String[] @map("media_urls")
+  thumbnailUrl String?  @map("thumbnail_url")
+  displayOrder Int      @default(0) @map("display_order")
+  isPublished  Boolean  @default(false) @map("is_published")
+  createdBy    String?  @map("created_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  team     Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  creator  User?            @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  versions ArtworkVersion[]
+
+  @@index([teamId])
+  @@index([isPublished])
+  @@map("artworks")
+}
+
+// 作品版本控制
+model ArtworkVersion {
+  id        String   @id @default(uuid())
+  artworkId String   @map("artwork_id")
+  version   Int
+  changes   Json
+  changedBy String?  @map("changed_by")
+  changedAt DateTime @default(now()) @map("changed_at")
+
+  // Relations
+  artwork Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  changer User?   @relation(fields: [changedBy], references: [id], onDelete: SetNull)
+
+  @@index([artworkId])
+  @@map("artwork_versions")
+}
+
+// ==================== 贊助與場地 ====================
+
+// 贊助商
+model Sponsor {
+  id              String   @id @default(uuid())
+  exhibitionId    String   @map("exhibition_id")
+  name            String   @db.VarChar(255)
+  logoUrl         String?  @map("logo_url")
+  tier            String?  @db.VarChar(50)
+  websiteUrl      String?  @map("website_url")
+  contactName     String?  @map("contact_name") @db.VarChar(100)
+  contactEmail    String?  @map("contact_email") @db.VarChar(255)
+  contactPhone    String?  @map("contact_phone") @db.VarChar(50)
+  isContactPublic Boolean  @default(false) @map("is_contact_public")
+  displayOrder    Int      @default(0) @map("display_order")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  exhibition Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+
+  @@index([exhibitionId])
+  @@map("sponsors")
+}
+
+// 場地
+model Venue {
+  id           String   @id @default(uuid())
+  exhibitionId String   @map("exhibition_id")
+  name         String   @db.VarChar(255)
+  address      String?  @db.Text
+  capacity     Int?
+  floorPlanUrl String?  @map("floor_plan_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  exhibition Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+
+  @@index([exhibitionId])
+  @@map("venues")
+}
+
+// ==================== 文件管理 ====================
+
+// 文件
+model Document {
+  id           String       @id @default(uuid())
+  exhibitionId String       @map("exhibition_id")
+  type         DocumentType
+  title        String       @db.VarChar(255)
+  fileUrl      String       @map("file_url") @db.Text
+  fileSize     BigInt?      @map("file_size")
+  mimeType     String?      @map("mime_type") @db.VarChar(100)
+  version      Int          @default(1)
+  uploadedBy   String?      @map("uploaded_by")
+  uploadedAt   DateTime     @default(now()) @map("uploaded_at")
+
+  // Relations
+  exhibition Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+  uploader   User?      @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@index([exhibitionId])
+  @@index([type])
+  @@map("documents")
+}
+
+enum DocumentType {
+  PROPOSAL
+  DESIGN
+  PLAN
+  OTHER
+}
+
+// ==================== 任務管理 (Trello) ====================
+
+// 看板
+model Board {
+  id           String   @id @default(uuid())
+  exhibitionId String   @map("exhibition_id")
+  name         String   @db.VarChar(255)
+  description  String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  exhibition Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+  lists      List[]
+
+  @@index([exhibitionId])
+  @@map("boards")
+}
+
+// 列表
+model List {
+  id        String   @id @default(uuid())
+  boardId   String   @map("board_id")
+  title     String   @db.VarChar(255)
+  position  Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards Card[]
+
+  @@index([boardId])
+  @@map("lists")
+}
+
+// 卡片
+model Card {
+  id          String    @id @default(uuid())
+  listId      String    @map("list_id")
+  title       String    @db.VarChar(255)
+  description String?   @db.Text
+  position    Int
+  dueDate     DateTime? @map("due_date")
+  priority    Priority?
+  createdBy   String?   @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  list        List             @relation(fields: [listId], references: [id], onDelete: Cascade)
+  creator     User?            @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  assignments CardAssignment[]
+  subtasks    Subtask[]
+  comments    CardComment[]
+
+  @@index([listId])
+  @@index([dueDate])
+  @@map("cards")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// 卡片指派
+model CardAssignment {
+  id         String   @id @default(uuid())
+  cardId     String   @map("card_id")
+  userId     String   @map("user_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  // Relations
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, userId])
+  @@index([cardId])
+  @@index([userId])
+  @@map("card_assignments")
+}
+
+// 子任務
+model Subtask {
+  id        String   @id @default(uuid())
+  cardId    String   @map("card_id")
+  title     String   @db.VarChar(255)
+  completed Boolean  @default(false)
+  position  Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+  @@map("subtasks")
+}
+
+// 卡片評論
+model CardComment {
+  id        String   @id @default(uuid())
+  cardId    String   @map("card_id")
+  userId    String?  @map("user_id")
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  card Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([cardId])
+  @@map("card_comments")
+}
+
+// ==================== 預約系統 ====================
+
+// 預約設定
+model ReservationConfig {
+  id                    String   @id @default(uuid())
+  teamId                String   @unique @map("team_id")
+  slotDurationMinutes   Int      @map("slot_duration_minutes")
+  breakDurationMinutes  Int      @map("break_duration_minutes")
+  maxConcurrentCapacity Int      @default(1) @map("max_concurrent_capacity")
+  dailyStartTime        DateTime @map("daily_start_time") @db.Time()
+  dailyEndTime          DateTime @map("daily_end_time") @db.Time()
+  isActive              Boolean  @default(true) @map("is_active")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("reservation_configs")
+}
+
+// 預約記錄
+model Reservation {
+  id                   String            @id @default(uuid())
+  teamId               String            @map("team_id")
+  visitorName          String            @map("visitor_name") @db.VarChar(100)
+  visitorPhone         String            @map("visitor_phone") @db.VarChar(50)
+  sequenceNumber       Int               @map("sequence_number")
+  reservationDate      DateTime          @map("reservation_date") @db.Date
+  slotDatetime         DateTime          @map("slot_datetime")
+  estimatedWaitMinutes Int?              @map("estimated_wait_minutes")
+  status               ReservationStatus @default(WAITING)
+  checkInTime          DateTime?         @map("check_in_time")
+  calledAt             DateTime?         @map("called_at")
+  completedAt          DateTime?         @map("completed_at")
+  notes                String?           @db.Text
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  team           Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  currentServing CurrentServing? @relation("ServingReservation")
+
+  @@unique([teamId, reservationDate, sequenceNumber])
+  @@index([teamId, reservationDate])
+  @@index([status])
+  @@map("reservations")
+}
+
+enum ReservationStatus {
+  WAITING
+  CALLED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+// 當前叫號狀態
+model CurrentServing {
+  teamId                String    @id @map("team_id")
+  currentSequenceNumber Int       @map("current_sequence_number")
+  servingReservationId  String?   @unique @map("serving_reservation_id")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  reservation Reservation? @relation("ServingReservation", fields: [servingReservationId], references: [id], onDelete: SetNull)
+
+  @@map("current_serving")
+}
+
+// ==================== 模板系統 ====================
+
+// 網站模板
+model SiteTemplate {
+  id              String   @id @default(uuid())
+  exhibitionId    String   @map("exhibition_id")
+  name            String   @db.VarChar(255)
+  templateJson    Json     @map("template_json")
+  isPublished     Boolean  @default(false) @map("is_published")
+  previewImageUrl String?  @map("preview_image_url")
+  createdBy       String?  @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  exhibition Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+  creator    User?      @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([exhibitionId])
+  @@map("site_templates")
+}
+
+// 預設模板庫
+model PresetTemplate {
+  id              String   @id @default(uuid())
+  name            String   @db.VarChar(255)
+  category        String?  @db.VarChar(50)
+  templateJson    Json     @map("template_json")
+  previewImageUrl String?  @map("preview_image_url")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("preset_templates")
+}
+
+// ==================== 審計日誌 ====================
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  entityType  String   @map("entity_type") @db.VarChar(50)
+  entityId    String   @map("entity_id")
+  action      String   @db.VarChar(50)
+  changes     Json?
+  performedBy String?  @map("performed_by")
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent") @db.Text
+  performedAt DateTime @default(now()) @map("performed_at")
+
+  // Relations
+  performer User? @relation(fields: [performedBy], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([performedBy])
+  @@index([performedAt])
+  @@map("audit_logs")
+}
+
+// ==================== 通知系統 ====================
+
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String           @map("user_id")
+  type        NotificationType
+  title       String           @db.VarChar(255)
+  content     String           @db.Text
+  isRead      Boolean          @default(false) @map("is_read")
+  relatedType String?          @map("related_type") @db.VarChar(50) // card, comment, board, etc.
+  relatedId   String?          @map("related_id")
+  metadata    Json?
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  CARD_ASSIGNED      // 被指派卡片
+  CARD_DUE_SOON      // 卡片即將到期
+  CARD_OVERDUE       // 卡片已過期
+  CARD_COMMENT       // 卡片有新評論
+  CARD_UPDATED       // 卡片被更新
+  SUBTASK_COMPLETED  // 子任務完成
+  MENTION            // 被提及
+  SYSTEM             // 系統通知
+}
+
+// ==================== 系統設定 ====================
+
+model SystemSetting {
+  key         String   @id @db.VarChar(100)
+  value       Json
+  description String?  @db.Text
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
