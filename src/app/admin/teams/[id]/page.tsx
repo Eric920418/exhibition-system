@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import DeleteTeamButton from '@/components/teams/DeleteTeamButton'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -74,6 +75,8 @@ export default async function TeamDetailPage({ params }: PageProps) {
     team.exhibition.createdBy === session.user.id ||
     team.leaderId === session.user.id
 
+  const canDelete = session.user.role === 'SUPER_ADMIN'
+
   return (
     <div className="p-8">
       {/* 標題和操作 */}
@@ -100,6 +103,13 @@ export default async function TeamDetailPage({ params }: PageProps) {
             >
               編輯團隊
             </Link>
+          )}
+          {canDelete && (
+            <DeleteTeamButton
+              teamId={id}
+              teamName={team.name}
+              hasArtworks={team._count.artworks > 0}
+            />
           )}
         </div>
       </div>

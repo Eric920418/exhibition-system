@@ -154,14 +154,14 @@ export default function TeamForm({ team, exhibitionId, leaders = [], mode }: Tea
           <div className="space-y-2">
             <Label htmlFor="leaderId">組長</Label>
             <Select
-              value={formData.leaderId}
-              onValueChange={(value) => setFormData((prev) => ({ ...prev, leaderId: value }))}
+              value={formData.leaderId || '__none__'}
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, leaderId: value === '__none__' ? '' : value }))}
             >
               <SelectTrigger id="leaderId">
                 <SelectValue placeholder="未指定" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">未指定</SelectItem>
+                <SelectItem value="__none__">未指定</SelectItem>
                 {leaders.map((leader) => (
                   <SelectItem key={leader.id} value={leader.id}>
                     {leader.name} ({leader.email})

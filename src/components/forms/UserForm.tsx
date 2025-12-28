@@ -150,7 +150,7 @@ export default function UserForm({ user, mode }: UserFormProps) {
                 <SelectValue placeholder="選擇角色" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="CURATOR">策展人</SelectItem>
+                <SelectItem value="CURATOR">畢籌人員</SelectItem>
                 <SelectItem value="TEAM_LEADER">組長</SelectItem>
                 <SelectItem value="SUPER_ADMIN">超級管理員</SelectItem>
               </SelectContent>

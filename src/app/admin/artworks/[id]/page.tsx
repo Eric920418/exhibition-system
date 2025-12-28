@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import DeleteArtworkButton from '@/components/artworks/DeleteArtworkButton'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -71,6 +72,9 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
     artwork.team.leaderId === session.user.id ||
     artwork.createdBy === session.user.id
 
+  // 刪除權限：僅 SUPER_ADMIN
+  const canDelete = session.user.role === 'SUPER_ADMIN'
+
   return (
     <div className="p-8">
       {/* 標題和操作 */}
@@ -109,6 +113,12 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
             >
               編輯作品
             </Link>
+          )}
+          {canDelete && (
+            <DeleteArtworkButton
+              artworkId={id}
+              artworkTitle={artwork.title}
+            />
           )}
         </div>
       </div>

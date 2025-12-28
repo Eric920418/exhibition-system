@@ -191,7 +191,8 @@ export const ALLOWED_FILE_TYPES = {
 } as const
 
 export function isAllowedFileType(mimeType: string, category: keyof typeof ALLOWED_FILE_TYPES): boolean {
-  return ALLOWED_FILE_TYPES[category].includes(mimeType as any)
+  const allowedTypes: readonly string[] = ALLOWED_FILE_TYPES[category]
+  return allowedTypes.includes(mimeType)
 }
 
 /**

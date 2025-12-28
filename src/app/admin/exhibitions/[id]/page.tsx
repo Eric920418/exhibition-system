@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import DeleteExhibitionButton from '@/components/exhibitions/DeleteExhibitionButton'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -77,6 +78,8 @@ export default async function ExhibitionDetailPage({ params }: PageProps) {
     session.user.role === 'SUPER_ADMIN' ||
     exhibition.createdBy === session.user.id
 
+  const canDelete = session.user.role === 'SUPER_ADMIN'
+
   return (
     <div className="p-8">
       {/* 標題和操作 */}
@@ -118,6 +121,14 @@ export default async function ExhibitionDetailPage({ params }: PageProps) {
             >
               編輯展覽
             </Link>
+          )}
+          {canDelete && (
+            <DeleteExhibitionButton
+              exhibitionId={id}
+              exhibitionName={exhibition.name}
+              hasTeams={exhibition.teams.length > 0}
+              hasMembers={exhibition.members.length > 0}
+            />
           )}
         </div>
       </div>

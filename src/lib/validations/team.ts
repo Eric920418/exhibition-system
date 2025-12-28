@@ -10,8 +10,8 @@ export const createTeamSchema = z.object({
     .min(1, 'Slug 不能為空')
     .max(255, 'Slug 過長')
     .regex(/^[a-z0-9-]+$/, 'Slug 只能包含小寫字母、數字和連字符'),
-  leaderId: z.string().uuid('無效的組長 ID').optional(),
-  description: z.string().optional(),
+  leaderId: z.string().uuid('無效的組長 ID').nullable().optional(),
+  description: z.string().nullable().optional(),
   displayOrder: z.number().int().min(0).optional().default(0),
 })
 
