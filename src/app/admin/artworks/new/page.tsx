@@ -147,7 +147,14 @@ export default async function NewArtworkPage({
         </p>
       </div>
 
-      <ArtworkForm mode="create" teamId={teamId} />
+      <ArtworkForm
+        mode="create"
+        teamId={teamId}
+        teamInfo={{
+          name: team.name,
+          exhibition: { name: team.exhibition.name, year: team.exhibition.year },
+        }}
+      />
     </div>
   )
 }

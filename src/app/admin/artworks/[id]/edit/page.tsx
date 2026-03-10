@@ -24,6 +24,8 @@ export default async function EditArtworkPage({ params }: PageProps) {
         include: {
           exhibition: {
             select: {
+              name: true,
+              year: true,
               createdBy: true,
             },
           },

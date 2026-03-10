@@ -1,26 +1,15 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/lib/auth'
-import WixLikeRenderer from '@/components/editor/WixLikeRenderer'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 export default async function Home() {
-  const session = await auth()
-  const isAdmin = session?.user?.role === 'SUPER_ADMIN'
-
   // 檢查系統設置：前台是否開放
-  const [frontendSetting, homepageDesign] = await Promise.all([
-    prisma.systemSetting.findUnique({
-      where: { key: 'frontend_enabled' },
-    }),
-    prisma.systemSetting.findUnique({
-      where: { key: 'homepage_design' },
-    }),
-  ])
+  const frontendSetting = await prisma.systemSetting.findUnique({
+    where: { key: 'frontend_enabled' },
+  })
 
   const isFrontendEnabled = frontendSetting?.value ? (frontendSetting.value as { enabled: boolean }).enabled : false
-  const hasCustomDesign = homepageDesign?.value && Object.keys(homepageDesign.value as object).length > 0
 
   // 如果前台未開放，顯示籌備中頁面
   if (!isFrontendEnabled) {
@@ -58,20 +47,7 @@ export default async function Home() {
     )
   }
 
-  // 如果有自訂首頁設計，渲染它
-  if (hasCustomDesign) {
-    const designData = homepageDesign.value as { sections?: any[]; elements?: any[] }
-    const sections = designData.sections || []
-    const elements = designData.elements || []
-
-    return (
-      <div className="min-h-screen" suppressHydrationWarning>
-        <WixLikeRenderer sections={sections} elements={elements} />
-      </div>
-    )
-  }
-
-  // 預設：顯示展覽列表
+  // 顯示展覽列表
   const exhibitions = await prisma.exhibition.findMany({
     where: { status: 'PUBLISHED' },
     orderBy: { year: 'desc' },
@@ -96,6 +72,14 @@ export default async function Home() {
               <h1 className="text-3xl font-bold text-gray-900">展覽管理系統</h1>
               <p className="text-gray-600 mt-1">探索精彩的展覽與作品</p>
             </div>
+            <nav className="flex items-center gap-6">
+              <Link
+                href="/artworks"
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                作品集
+              </Link>
+            </nav>
           </div>
         </div>
       </header>
@@ -236,7 +220,7 @@ export default async function Home() {
       <footer className="bg-white border-t mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-600">
-            <p>© {new Date().getFullYear()} 展覽管理系統 - 所有權利保留</p>
+            <p>© 2026 元智大學資訊傳播學系畢業製作</p>
           </div>
         </div>
       </footer>
