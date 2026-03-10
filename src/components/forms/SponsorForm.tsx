@@ -240,18 +240,20 @@ export default function SponsorForm({ sponsor, exhibitionId, mode }: SponsorForm
       </div>
 
       {/* 操作按鈕 */}
-      <div className="flex justify-end space-x-4">
+      <div className="flex flex-col sm:flex-row sm:justify-end gap-3 sm:gap-4">
         <Button
           type="button"
           variant="outline"
           onClick={() => router.back()}
           disabled={loading}
+          className="w-full sm:w-auto order-2 sm:order-1"
         >
           取消
         </Button>
         <Button
           type="submit"
           disabled={loading}
+          className="w-full sm:w-auto order-1 sm:order-2"
         >
           {loading ? '處理中...' : mode === 'create' ? '創建贊助商' : '更新贊助商'}
         </Button>

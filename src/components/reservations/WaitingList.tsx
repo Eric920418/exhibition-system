@@ -77,16 +77,16 @@ export function WaitingList({
 }: WaitingListProps) {
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
+      <CardHeader className="pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <CardTitle>等候名單</CardTitle>
+            <CardTitle className="text-lg">等候名單</CardTitle>
             <CardDescription>
               共 {pagination.total} 筆預約
             </CardDescription>
           </div>
           <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-full sm:w-[140px]">
               <SelectValue placeholder="篩選狀態" />
             </SelectTrigger>
             <SelectContent>
@@ -100,7 +100,49 @@ export function WaitingList({
         </div>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[400px]">
+        {/* 手機版卡片視圖 */}
+        <div className="md:hidden space-y-3 max-h-[400px] overflow-y-auto">
+          {reservations.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">
+              目前沒有預約記錄
+            </div>
+          ) : (
+            reservations.map((reservation) => (
+              <div
+                key={reservation.id}
+                className="border rounded-lg p-3 flex items-center justify-between gap-3"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="text-2xl font-bold text-primary w-12 text-center shrink-0">
+                    {reservation.sequenceNumber}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{reservation.visitorName}</div>
+                    <div className="text-sm text-muted-foreground">{reservation.visitorPhone}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge variant={statusLabels[reservation.status]?.variant || 'secondary'} className="text-xs">
+                    {statusLabels[reservation.status]?.label || reservation.status}
+                  </Badge>
+                  {reservation.status === 'WAITING' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onCallSpecific(reservation.id)}
+                      disabled={loading}
+                    >
+                      叫號
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* 桌面版表格視圖 */}
+        <ScrollArea className="h-[400px] hidden md:block">
           <Table>
             <TableHeader>
               <TableRow>

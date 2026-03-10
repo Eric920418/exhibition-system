@@ -21,20 +21,24 @@ interface Team {
 }
 
 interface ServingStatus {
-  currentSequenceNumber: number
-  servingReservation: {
-    id: string
+  currentServing: {
     sequenceNumber: number
-    visitorName: string
-    visitorPhone: string
-    calledAt: string | null
+    reservation: {
+      id: string
+      visitorName: string
+      visitorPhone: string
+      status: string
+      calledAt: string | null
+    } | null
   } | null
-  stats: {
+  queue: {
     waiting: number
     called: number
     completed: number
     noShow: number
-    avgWaitMinutes: number
+    inProgress: number
+    cancelled: number
+    total: number
   }
 }
 
@@ -331,38 +335,38 @@ export default function QueuePage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 md:p-6 pt-20 md:pt-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold">叫號管理</h1>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <span>{team?.exhibition.name}</span>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl md:text-2xl font-bold">叫號管理</h1>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
+              <span className="truncate">{team?.exhibition.name}</span>
               <span>/</span>
-              <span>{team?.name}</span>
+              <span className="truncate">{team?.name}</span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="text-sm">
             <Calendar className="h-3 w-3 mr-1" />
             {today}
           </Badge>
           <Button variant="outline" size="sm" onClick={handleRefresh}>
-            <RefreshCw className="h-4 w-4 mr-1" />
-            重新整理
+            <RefreshCw className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">重新整理</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => window.open(`/reservations/display/${teamId}`, '_blank')}
           >
-            <Monitor className="h-4 w-4 mr-1" />
-            開啟大螢幕
+            <Monitor className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">開啟大螢幕</span>
           </Button>
         </div>
       </div>
@@ -372,8 +376,14 @@ export default function QueuePage({
         {/* Left Column - Current Serving & Controls */}
         <div className="space-y-6">
           <CurrentServingCard
-            currentNumber={servingStatus?.currentSequenceNumber || 0}
-            reservation={servingStatus?.servingReservation}
+            currentNumber={servingStatus?.currentServing?.sequenceNumber || 0}
+            reservation={servingStatus?.currentServing?.reservation ? {
+              id: servingStatus.currentServing.reservation.id,
+              sequenceNumber: servingStatus.currentServing.sequenceNumber,
+              visitorName: servingStatus.currentServing.reservation.visitorName,
+              visitorPhone: servingStatus.currentServing.reservation.visitorPhone,
+              calledAt: servingStatus.currentServing.reservation.calledAt,
+            } : null}
             onComplete={handleComplete}
             onNoShow={handleNoShow}
             onRequeue={handleRequeue}
@@ -381,11 +391,11 @@ export default function QueuePage({
           />
 
           <QueueControlPanel
-            stats={servingStatus?.stats || {
-              waiting: 0,
-              called: 0,
-              completed: 0,
-              noShow: 0,
+            stats={{
+              waiting: servingStatus?.queue?.waiting || 0,
+              called: servingStatus?.queue?.called || 0,
+              completed: servingStatus?.queue?.completed || 0,
+              noShow: servingStatus?.queue?.noShow || 0,
               avgWaitMinutes: 0,
             }}
             onCallNext={handleCallNext}

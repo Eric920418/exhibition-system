@@ -20,12 +20,19 @@ interface UserFormProps {
     avatarUrl?: string | null
   }
   mode: 'create' | 'edit'
+  isSuperAdmin?: boolean
+  currentUserId?: string
 }
 
-export default function UserForm({ user, mode }: UserFormProps) {
+export default function UserForm({ user, mode, isSuperAdmin, currentUserId }: UserFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  // 是否可以删除：超级管理员 + 编辑模式 + 不是自己
+  const canDelete = isSuperAdmin && mode === 'edit' && user?.id !== currentUserId
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -100,6 +107,29 @@ export default function UserForm({ user, mode }: UserFormProps) {
       [name]:
         type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }))
+  }
+
+  const handleDelete = async () => {
+    if (!user?.id) return
+
+    setDeleting(true)
+    try {
+      await apiClient.delete(`/users/${user.id}`)
+      toast({
+        title: '刪除成功',
+        description: '用戶已成功刪除',
+      })
+      router.push('/admin/users')
+    } catch (error: any) {
+      toast({
+        title: '刪除失敗',
+        description: error.message || '操作失敗，請稍後再試',
+        variant: 'destructive',
+      })
+    } finally {
+      setDeleting(false)
+      setShowDeleteConfirm(false)
+    }
   }
 
   return (
@@ -206,22 +236,71 @@ export default function UserForm({ user, mode }: UserFormProps) {
       </div>
 
       {/* 操作按鈕 */}
-      <div className="flex justify-end space-x-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={loading}
-        >
-          取消
-        </Button>
-        <Button
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? '處理中...' : mode === 'create' ? '創建用戶' : '更新用戶'}
-        </Button>
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-4">
+        {/* 刪除按鈕 - 僅超級管理員可見 */}
+        <div>
+          {canDelete && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={loading || deleting}
+              className="w-full sm:w-auto"
+            >
+              刪除用戶
+            </Button>
+          )}
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={loading || deleting}
+            className="w-full sm:w-auto order-2 sm:order-1"
+          >
+            取消
+          </Button>
+          <Button
+            type="submit"
+            disabled={loading || deleting}
+            className="w-full sm:w-auto order-1 sm:order-2"
+          >
+            {loading ? '處理中...' : mode === 'create' ? '創建用戶' : '更新用戶'}
+          </Button>
+        </div>
       </div>
+
+      {/* 刪除確認對話框 */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">確認刪除</h3>
+            <p className="text-gray-600 mb-4">
+              確定要刪除用戶 <strong>{user?.name}</strong> ({user?.email}) 嗎？此操作無法撤銷。
+            </p>
+            <div className="flex justify-end space-x-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+              >
+                取消
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? '刪除中...' : '確認刪除'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   )
 }

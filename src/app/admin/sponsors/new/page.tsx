@@ -49,9 +49,9 @@ export default async function NewSponsorPage({
     })
 
     return (
-      <div className="p-8">
+      <div className="p-4 md:p-8 pt-20 md:pt-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">新增贊助商</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">新增贊助商</h1>
           <p className="text-gray-600 mt-2">請選擇要添加贊助商的展覽</p>
         </div>
 
@@ -129,9 +129,9 @@ export default async function NewSponsorPage({
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8 pt-20 md:pt-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">新增贊助商</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">新增贊助商</h1>
         <p className="text-gray-600 mt-2">
           展覽：{exhibition.name} ({exhibition.year})
         </p>

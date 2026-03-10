@@ -45,9 +45,9 @@ export default async function EditSponsorPage({ params }: PageProps) {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8 pt-20 md:pt-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">編輯贊助商</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">編輯贊助商</h1>
         <p className="text-gray-600 mt-2">
           {sponsor.name} - {sponsor.exhibition.name} ({sponsor.exhibition.year})
         </p>

@@ -121,9 +121,9 @@ export default async function AdminDashboard() {
   const [publishedCount, draftCount, archivedCount] = exhibitionsByStatus
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">管理後台</h1>
+    <div className="p-4 md:p-8 pt-20 md:pt-8">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">管理後台</h1>
         <p className="text-gray-600 mt-2">
           歡迎回來，{session.user.name}
           {!isSuperAdmin && <span className="ml-2 text-sm">(策展人視圖)</span>}
@@ -131,16 +131,16 @@ export default async function AdminDashboard() {
       </div>
 
       {/* 主要統計卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-4 md:p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm">展覽數量</p>
-              <p className="text-4xl font-bold mt-2">{exhibitionCount}</p>
+              <p className="text-blue-100 text-xs md:text-sm">展覽數量</p>
+              <p className="text-2xl md:text-4xl font-bold mt-1 md:mt-2">{exhibitionCount}</p>
             </div>
-            <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <div className="bg-white bg-opacity-20 p-2 md:p-3 rounded-lg hidden sm:block">
               <svg
-                className="w-8 h-8"
+                className="w-6 h-6 md:w-8 md:h-8"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -156,15 +156,15 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-4 md:p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-green-100 text-sm">團隊數量</p>
-              <p className="text-4xl font-bold mt-2">{teamCount}</p>
+              <p className="text-green-100 text-xs md:text-sm">團隊數量</p>
+              <p className="text-2xl md:text-4xl font-bold mt-1 md:mt-2">{teamCount}</p>
             </div>
-            <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <div className="bg-white bg-opacity-20 p-2 md:p-3 rounded-lg hidden sm:block">
               <svg
-                className="w-8 h-8"
+                className="w-6 h-6 md:w-8 md:h-8"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -180,15 +180,15 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-4 md:p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-100 text-sm">作品總數</p>
-              <p className="text-4xl font-bold mt-2">{artworkCount}</p>
+              <p className="text-purple-100 text-xs md:text-sm">作品總數</p>
+              <p className="text-2xl md:text-4xl font-bold mt-1 md:mt-2">{artworkCount}</p>
             </div>
-            <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <div className="bg-white bg-opacity-20 p-2 md:p-3 rounded-lg hidden sm:block">
               <svg
-                className="w-8 h-8"
+                className="w-6 h-6 md:w-8 md:h-8"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -204,15 +204,15 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-4 md:p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-orange-100 text-sm">總用戶數</p>
-              <p className="text-4xl font-bold mt-2">{userCount}</p>
+              <p className="text-orange-100 text-xs md:text-sm">總用戶數</p>
+              <p className="text-2xl md:text-4xl font-bold mt-1 md:mt-2">{userCount}</p>
             </div>
-            <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <div className="bg-white bg-opacity-20 p-2 md:p-3 rounded-lg hidden sm:block">
               <svg
-                className="w-8 h-8"
+                className="w-6 h-6 md:w-8 md:h-8"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -230,16 +230,16 @@ export default async function AdminDashboard() {
       </div>
 
       {/* 次要統計卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
+      <div className="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
+        <div className="bg-white rounded-lg shadow p-3 md:p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-gray-500 text-sm">贊助商</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">
+              <p className="text-gray-500 text-xs md:text-sm">贊助商</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-800 mt-1">
                 {sponsorCount}
               </p>
             </div>
-            <div className="bg-pink-100 p-2 rounded-lg">
+            <div className="bg-pink-100 p-2 rounded-lg hidden md:block">
               <svg
                 className="w-6 h-6 text-pink-600"
                 fill="none"
@@ -257,13 +257,13 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-lg shadow p-3 md:p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-gray-500 text-sm">展覽場地</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">{venueCount}</p>
+              <p className="text-gray-500 text-xs md:text-sm">展覽場地</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-800 mt-1">{venueCount}</p>
             </div>
-            <div className="bg-teal-100 p-2 rounded-lg">
+            <div className="bg-teal-100 p-2 rounded-lg hidden md:block">
               <svg
                 className="w-6 h-6 text-teal-600"
                 fill="none"
@@ -287,15 +287,15 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-lg shadow p-3 md:p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-gray-500 text-sm">文件數量</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">
+              <p className="text-gray-500 text-xs md:text-sm">文件數量</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-800 mt-1">
                 {documentCount}
               </p>
             </div>
-            <div className="bg-indigo-100 p-2 rounded-lg">
+            <div className="bg-indigo-100 p-2 rounded-lg hidden md:block">
               <svg
                 className="w-6 h-6 text-indigo-600"
                 fill="none"
@@ -315,29 +315,29 @@ export default async function AdminDashboard() {
       </div>
 
       {/* 展覽狀態分布 */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">展覽狀態分布</h2>
-        <div className="grid grid-cols-3 gap-4">
+      <div className="bg-white rounded-lg shadow p-4 md:p-6 mb-6 md:mb-8">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-3 md:mb-4">展覽狀態分布</h2>
+        <div className="grid grid-cols-3 gap-2 md:gap-4">
           <div className="text-center">
-            <div className="text-3xl font-bold text-green-600">{publishedCount}</div>
-            <div className="text-sm text-gray-500 mt-1">已發布</div>
+            <div className="text-xl md:text-3xl font-bold text-green-600">{publishedCount}</div>
+            <div className="text-xs md:text-sm text-gray-500 mt-1">已發布</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-yellow-600">{draftCount}</div>
-            <div className="text-sm text-gray-500 mt-1">草稿</div>
+            <div className="text-xl md:text-3xl font-bold text-yellow-600">{draftCount}</div>
+            <div className="text-xs md:text-sm text-gray-500 mt-1">草稿</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-gray-600">{archivedCount}</div>
-            <div className="text-sm text-gray-500 mt-1">已歸檔</div>
+            <div className="text-xl md:text-3xl font-bold text-gray-600">{archivedCount}</div>
+            <div className="text-xs md:text-sm text-gray-500 mt-1">已歸檔</div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 mb-6 md:mb-8">
         {/* 最近的展覽 */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">最近的展覽</h2>
+        <div className="bg-white rounded-lg shadow p-4 md:p-6">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-800">最近的展覽</h2>
             <Link href="/admin/exhibitions" className="text-blue-600 hover:text-blue-900 text-sm">
               查看全部 →
             </Link>
@@ -378,9 +378,9 @@ export default async function AdminDashboard() {
         </div>
 
         {/* 最近的作品 */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">最近的作品</h2>
+        <div className="bg-white rounded-lg shadow p-4 md:p-6">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-800">最近的作品</h2>
             <Link href="/admin/artworks" className="text-blue-600 hover:text-blue-900 text-sm">
               查看全部 →
             </Link>
@@ -436,15 +436,15 @@ export default async function AdminDashboard() {
 
       {/* 快速操作 */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">快速操作</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-3 md:mb-4">快速操作</h2>
+        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
           <Link
             href="/admin/exhibitions/new"
-            className="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow text-center"
+            className="bg-white rounded-lg shadow p-3 md:p-4 hover:shadow-lg transition-shadow text-center"
           >
-            <div className="bg-blue-500 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-2">
+            <div className="bg-blue-500 w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center mx-auto mb-1 md:mb-2">
               <svg
-                className="w-6 h-6 text-white"
+                className="w-5 h-5 md:w-6 md:h-6 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -457,16 +457,16 @@ export default async function AdminDashboard() {
                 />
               </svg>
             </div>
-            <span className="text-sm font-medium text-gray-700">新增展覽</span>
+            <span className="text-xs md:text-sm font-medium text-gray-700">新增展覽</span>
           </Link>
 
           <Link
             href="/admin/teams/new"
-            className="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow text-center"
+            className="bg-white rounded-lg shadow p-3 md:p-4 hover:shadow-lg transition-shadow text-center"
           >
-            <div className="bg-green-500 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-2">
+            <div className="bg-green-500 w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center mx-auto mb-1 md:mb-2">
               <svg
-                className="w-6 h-6 text-white"
+                className="w-5 h-5 md:w-6 md:h-6 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -479,16 +479,16 @@ export default async function AdminDashboard() {
                 />
               </svg>
             </div>
-            <span className="text-sm font-medium text-gray-700">新增團隊</span>
+            <span className="text-xs md:text-sm font-medium text-gray-700">新增團隊</span>
           </Link>
 
           <Link
             href="/admin/artworks/new"
-            className="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow text-center"
+            className="bg-white rounded-lg shadow p-3 md:p-4 hover:shadow-lg transition-shadow text-center"
           >
-            <div className="bg-purple-500 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-2">
+            <div className="bg-purple-500 w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center mx-auto mb-1 md:mb-2">
               <svg
-                className="w-6 h-6 text-white"
+                className="w-5 h-5 md:w-6 md:h-6 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -501,16 +501,16 @@ export default async function AdminDashboard() {
                 />
               </svg>
             </div>
-            <span className="text-sm font-medium text-gray-700">上傳作品</span>
+            <span className="text-xs md:text-sm font-medium text-gray-700">上傳作品</span>
           </Link>
 
           <Link
             href="/admin/sponsors/new"
-            className="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow text-center"
+            className="bg-white rounded-lg shadow p-3 md:p-4 hover:shadow-lg transition-shadow text-center"
           >
-            <div className="bg-pink-500 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-2">
+            <div className="bg-pink-500 w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center mx-auto mb-1 md:mb-2">
               <svg
-                className="w-6 h-6 text-white"
+                className="w-5 h-5 md:w-6 md:h-6 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -523,16 +523,16 @@ export default async function AdminDashboard() {
                 />
               </svg>
             </div>
-            <span className="text-sm font-medium text-gray-700">新增贊助商</span>
+            <span className="text-xs md:text-sm font-medium text-gray-700">新增贊助商</span>
           </Link>
 
           <Link
             href="/admin/venues/new"
-            className="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow text-center"
+            className="bg-white rounded-lg shadow p-3 md:p-4 hover:shadow-lg transition-shadow text-center"
           >
-            <div className="bg-teal-500 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-2">
+            <div className="bg-teal-500 w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center mx-auto mb-1 md:mb-2">
               <svg
-                className="w-6 h-6 text-white"
+                className="w-5 h-5 md:w-6 md:h-6 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -551,16 +551,16 @@ export default async function AdminDashboard() {
                 />
               </svg>
             </div>
-            <span className="text-sm font-medium text-gray-700">新增場地</span>
+            <span className="text-xs md:text-sm font-medium text-gray-700">新增場地</span>
           </Link>
 
           <Link
             href="/admin/documents/upload"
-            className="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow text-center"
+            className="bg-white rounded-lg shadow p-3 md:p-4 hover:shadow-lg transition-shadow text-center"
           >
-            <div className="bg-indigo-500 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-2">
+            <div className="bg-indigo-500 w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center mx-auto mb-1 md:mb-2">
               <svg
-                className="w-6 h-6 text-white"
+                className="w-5 h-5 md:w-6 md:h-6 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -573,7 +573,7 @@ export default async function AdminDashboard() {
                 />
               </svg>
             </div>
-            <span className="text-sm font-medium text-gray-700">上傳文件</span>
+            <span className="text-xs md:text-sm font-medium text-gray-700">上傳文件</span>
           </Link>
         </div>
       </div>

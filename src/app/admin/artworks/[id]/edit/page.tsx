@@ -48,9 +48,9 @@ export default async function EditArtworkPage({ params }: PageProps) {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8 pt-20 md:pt-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">編輯作品</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">編輯作品</h1>
         <p className="text-gray-600 mt-2">{artwork.title}</p>
       </div>
 

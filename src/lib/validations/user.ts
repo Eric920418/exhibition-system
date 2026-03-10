@@ -9,7 +9,7 @@ export const createUserSchema = z.object({
   password: z.string().min(6, '密碼至少需要 6 個字元'),
   name: z.string().min(2, '姓名至少需要 2 個字元').max(100, '姓名過長'),
   role: z.nativeEnum(UserRole, { errorMap: () => ({ message: '無效的角色' }) }),
-  avatarUrl: z.string().url('無效的頭像 URL').optional(),
+  avatarUrl: z.string().url('無效的頭像 URL').nullish().or(z.literal('')),
   isActive: z.boolean().optional().default(true),
 })
 

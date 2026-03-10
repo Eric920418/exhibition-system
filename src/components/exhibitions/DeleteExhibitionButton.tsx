@@ -66,13 +66,27 @@ export default function DeleteExhibitionButton({
 
   if (cannotDelete) {
     return (
-      <Button
-        variant="destructive"
-        disabled
-        title={reason}
-      >
-        刪除展覽
-      </Button>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="destructive">
+            刪除展覽
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>無法刪除展覽</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>{reason}</p>
+              <p className="text-sm">
+                請先前往展覽詳情頁面，刪除所有關聯的{hasTeams ? '團隊' : ''}{hasTeams && hasMembers ? '和' : ''}{hasMembers ? '成員' : ''}後，才能刪除此展覽。
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>我知道了</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     )
   }
 

@@ -68,16 +68,16 @@ export default async function SponsorsPage({
   })
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8 pt-20 md:pt-8">
       {/* 標題和操作按鈕 */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">贊助商管理</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">贊助商管理</h1>
           <p className="text-gray-600 mt-2">共 {total} 個贊助商</p>
         </div>
         <Link
           href="/admin/sponsors/new"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="w-full sm:w-auto text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           新增贊助商
         </Link>

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import ExhibitionFilter from './ExhibitionFilter'
 
 interface SearchParams {
   exhibitionId?: string
@@ -85,11 +86,11 @@ export default async function ReservationSettingsPage({
   const totalPages = Math.ceil(total / limit)
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-4 md:p-8 pt-20 md:pt-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">預約設定管理</h1>
-          <p className="text-gray-500 mt-1">為各組別設定預約參數</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">預約設定管理</h1>
+          <p className="text-gray-500 mt-1 text-sm md:text-base">為各組別設定預約參數</p>
         </div>
         <Link
           href="/admin/reservations"
@@ -100,36 +101,13 @@ export default async function ReservationSettingsPage({
       </div>
 
       {/* 篩選區 */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <form className="flex items-center space-x-4">
-          <label className="text-sm text-gray-600">展覽篩選：</label>
-          <select
-            name="exhibitionId"
-            defaultValue={exhibitionId || ''}
-            className="border rounded-lg px-3 py-2 text-sm"
-            onChange={(e) => {
-              const url = new URL(window.location.href)
-              if (e.target.value) {
-                url.searchParams.set('exhibitionId', e.target.value)
-              } else {
-                url.searchParams.delete('exhibitionId')
-              }
-              url.searchParams.delete('page')
-              window.location.href = url.toString()
-            }}
-          >
-            <option value="">全部展覽</option>
-            {exhibitions.map((ex) => (
-              <option key={ex.id} value={ex.id}>
-                {ex.name} ({ex.year})
-              </option>
-            ))}
-          </select>
-        </form>
-      </div>
+      <ExhibitionFilter
+        exhibitions={exhibitions}
+        currentExhibitionId={exhibitionId}
+      />
 
-      {/* 組別列表 */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* 組別列表 - 桌面版表格 */}
+      <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -237,37 +215,118 @@ export default async function ReservationSettingsPage({
           </div>
         )}
 
-        {/* 分頁 */}
-        {totalPages > 1 && (
-          <div className="px-6 py-4 border-t flex justify-between items-center">
-            <span className="text-sm text-gray-500">
-              共 {total} 個組別，第 {page} / {totalPages} 頁
-            </span>
-            <div className="space-x-2">
-              {page > 1 && (
-                <Link
-                  href={`?page=${page - 1}${
-                    exhibitionId ? `&exhibitionId=${exhibitionId}` : ''
-                  }`}
-                  className="px-3 py-1 border rounded hover:bg-gray-50"
-                >
-                  上一頁
-                </Link>
-              )}
-              {page < totalPages && (
-                <Link
-                  href={`?page=${page + 1}${
-                    exhibitionId ? `&exhibitionId=${exhibitionId}` : ''
-                  }`}
-                  className="px-3 py-1 border rounded hover:bg-gray-50"
-                >
-                  下一頁
-                </Link>
-              )}
-            </div>
+      </div>
+
+      {/* 組別列表 - 移動端卡片 */}
+      <div className="md:hidden space-y-4">
+        {teams.length === 0 ? (
+          <div className="p-8 text-center text-gray-500 bg-white rounded-lg shadow">
+            沒有找到任何組別
           </div>
+        ) : (
+          teams.map((team) => (
+            <div
+              key={team.id}
+              className="bg-white rounded-lg shadow p-4 space-y-3"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-medium text-gray-900">{team.name}</h3>
+                  <p className="text-sm text-gray-500">{team.slug}</p>
+                </div>
+                {team.reservationConfig ? (
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full ${
+                      team.reservationConfig.isActive
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {team.reservationConfig.isActive ? '啟用中' : '已停用'}
+                  </span>
+                ) : (
+                  <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-500">
+                    未設定
+                  </span>
+                )}
+              </div>
+              <div className="text-sm text-gray-600">
+                {team.exhibition.name} ({team.exhibition.year})
+              </div>
+              {team.reservationConfig && (
+                <div className="text-sm text-gray-500">
+                  <span>{team.reservationConfig.slotDurationMinutes} 分鐘/時段</span>
+                  <span className="mx-2">·</span>
+                  <span>
+                    {formatTime(team.reservationConfig.dailyStartTime)} - {formatTime(team.reservationConfig.dailyEndTime)}
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                <span className="text-sm text-gray-500">
+                  {team._count.reservations} 筆預約
+                </span>
+                <div className="flex gap-3">
+                  {team.reservationConfig ? (
+                    <>
+                      <Link
+                        href={`/admin/reservations/${team.id}/config`}
+                        className="text-sm text-blue-600 hover:text-blue-800"
+                      >
+                        編輯
+                      </Link>
+                      <Link
+                        href={`/admin/reservations/${team.id}/queue`}
+                        className="text-sm text-green-600 hover:text-green-800"
+                      >
+                        叫號
+                      </Link>
+                    </>
+                  ) : (
+                    <Link
+                      href={`/admin/reservations/${team.id}/config?mode=create`}
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      創建設定
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
         )}
       </div>
+
+      {/* 分頁 */}
+      {totalPages > 1 && (
+        <div className="mt-6 px-4 py-3 bg-white rounded-lg shadow flex flex-col sm:flex-row justify-between items-center gap-3">
+          <span className="text-sm text-gray-500">
+            共 {total} 個組別，第 {page} / {totalPages} 頁
+          </span>
+          <div className="space-x-2">
+            {page > 1 && (
+              <Link
+                href={`?page=${page - 1}${
+                  exhibitionId ? `&exhibitionId=${exhibitionId}` : ''
+                }`}
+                className="px-3 py-1 border rounded hover:bg-gray-50"
+              >
+                上一頁
+              </Link>
+            )}
+            {page < totalPages && (
+              <Link
+                href={`?page=${page + 1}${
+                  exhibitionId ? `&exhibitionId=${exhibitionId}` : ''
+                }`}
+                className="px-3 py-1 border rounded hover:bg-gray-50"
+              >
+                下一頁
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

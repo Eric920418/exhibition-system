@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 
+// 強制動態渲染，確保每次都讀取最新資料
+export const dynamic = 'force-dynamic'
+
 export default async function ReservationsPage() {
   // 獲取有啟用預約設定的組別
   const teams = await prisma.team.findMany({
@@ -91,36 +94,40 @@ export default async function ReservationsPage() {
                     <Link
                       key={team.id}
                       href={`/reservations/${team.id}`}
-                      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-6 flex items-center justify-between group"
+                      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-4 sm:p-6 group"
                     >
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                          {team.name}
-                        </h3>
-                        {team.description && (
-                          <p className="text-sm text-gray-500 mt-1 line-clamp-1">
-                            {team.description}
-                          </p>
-                        )}
-                        <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                          <span>
-                            {formatTime(team.reservationConfig!.dailyStartTime)}{' '}
-                            - {formatTime(team.reservationConfig!.dailyEndTime)}
-                          </span>
-                          <span>
-                            每時段 {team.reservationConfig!.slotDurationMinutes}{' '}
-                            分鐘
-                          </span>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                            {team.name}
+                          </h3>
+                          {team.description && (
+                            <p className="text-sm text-gray-500 mt-1 line-clamp-2 sm:line-clamp-1">
+                              {team.description}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-sm text-gray-500">
+                            <span>
+                              {formatTime(team.reservationConfig!.dailyStartTime)}{' '}
+                              - {formatTime(team.reservationConfig!.dailyEndTime)}
+                            </span>
+                            <span>
+                              每時段 {team.reservationConfig!.slotDurationMinutes}{' '}
+                              分鐘
+                            </span>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-blue-600">
-                          {team._count.reservations}
-                        </div>
-                        <div className="text-sm text-gray-500">人等候中</div>
-                        <div className="mt-2 px-4 py-1.5 bg-blue-600 text-white rounded-full text-sm font-medium group-hover:bg-blue-700 transition-colors">
-                          立即取號
+                        <div className="flex items-center justify-between sm:flex-col sm:text-right gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                          <div className="flex items-center sm:block gap-2">
+                            <div className="text-2xl font-bold text-blue-600">
+                              {team._count.reservations}
+                            </div>
+                            <div className="text-sm text-gray-500">人等候中</div>
+                          </div>
+                          <div className="px-4 py-1.5 bg-blue-600 text-white rounded-full text-sm font-medium group-hover:bg-blue-700 transition-colors whitespace-nowrap">
+                            立即取號
+                          </div>
                         </div>
                       </div>
                     </Link>

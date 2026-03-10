@@ -110,63 +110,63 @@ export default async function ReservationsPage() {
   })
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-4 md:p-8 pt-20 md:pt-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">預約叫號系統</h1>
-          <p className="text-gray-500 mt-1">管理展覽組別的預約設定和叫號服務</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">預約叫號系統</h1>
+          <p className="text-gray-500 mt-1 text-sm md:text-base">管理展覽組別的預約設定和叫號服務</p>
         </div>
         <Link
           href="/admin/reservations/settings"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="w-full sm:w-auto text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           管理預約設定
         </Link>
       </div>
 
       {/* 統計卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-sm font-medium text-gray-500">預約設定</h3>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{totalConfigs}</p>
-          <p className="text-sm text-gray-500 mt-1">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-6 mb-6 md:mb-8">
+        <div className="bg-white rounded-lg shadow p-4 md:p-6">
+          <h3 className="text-xs md:text-sm font-medium text-gray-500">預約設定</h3>
+          <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{totalConfigs}</p>
+          <p className="text-xs md:text-sm text-gray-500 mt-1">
             {activeConfigs} 個啟用中
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-sm font-medium text-gray-500">今日預約</h3>
-          <p className="text-3xl font-bold text-blue-600 mt-2">{todayReservations}</p>
-          <p className="text-sm text-gray-500 mt-1">
+        <div className="bg-white rounded-lg shadow p-4 md:p-6">
+          <h3 className="text-xs md:text-sm font-medium text-gray-500">今日預約</h3>
+          <p className="text-xl md:text-3xl font-bold text-blue-600 mt-1 md:mt-2">{todayReservations}</p>
+          <p className="text-xs md:text-sm text-gray-500 mt-1">
             總預約人數
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-sm font-medium text-gray-500">等候中</h3>
-          <p className="text-3xl font-bold text-orange-600 mt-2">{waitingCount}</p>
-          <p className="text-sm text-gray-500 mt-1">
+        <div className="bg-white rounded-lg shadow p-4 md:p-6">
+          <h3 className="text-xs md:text-sm font-medium text-gray-500">等候中</h3>
+          <p className="text-xl md:text-3xl font-bold text-orange-600 mt-1 md:mt-2">{waitingCount}</p>
+          <p className="text-xs md:text-sm text-gray-500 mt-1">
             尚未叫號
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-sm font-medium text-gray-500">已完成</h3>
-          <p className="text-3xl font-bold text-green-600 mt-2">{completedToday}</p>
-          <p className="text-sm text-gray-500 mt-1">
-            今日服務完成
+        <div className="bg-white rounded-lg shadow p-4 md:p-6">
+          <h3 className="text-xs md:text-sm font-medium text-gray-500">已完成</h3>
+          <p className="text-xl md:text-3xl font-bold text-green-600 mt-1 md:mt-2">{completedToday}</p>
+          <p className="text-xs md:text-sm text-gray-500 mt-1">
+            今日服務
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-sm font-medium text-gray-500">完成率</h3>
-          <p className="text-3xl font-bold text-purple-600 mt-2">
+        <div className="bg-white rounded-lg shadow p-4 md:p-6 col-span-2 md:col-span-1">
+          <h3 className="text-xs md:text-sm font-medium text-gray-500">完成率</h3>
+          <p className="text-xl md:text-3xl font-bold text-purple-600 mt-1 md:mt-2">
             {todayReservations > 0
               ? Math.round((completedToday / todayReservations) * 100)
               : 0}
             %
           </p>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-xs md:text-sm text-gray-500 mt-1">
             今日進度
           </p>
         </div>
