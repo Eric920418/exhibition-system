@@ -35,6 +35,7 @@ model User {
   siteTemplatesCreated SiteTemplate[]
   auditLogs            AuditLog[]
   notifications        Notification[]
+  apiKeysCreated       ApiKey[]
 
   @@index([email])
   @@index([role])
@@ -566,4 +567,26 @@ model SystemSetting {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("system_settings")
+}
+
+// ==================== API 金鑰 ====================
+
+model ApiKey {
+  id          String    @id @default(uuid())
+  keyHash     String    @unique @map("key_hash") @db.VarChar(64)
+  keyPrefix   String    @map("key_prefix") @db.VarChar(8)
+  name        String    @db.VarChar(100)
+  description String?   @db.Text
+  isActive    Boolean   @default(true) @map("is_active")
+  rateLimit   Int       @default(100) @map("rate_limit")
+  lastUsedAt  DateTime? @map("last_used_at")
+  expiresAt   DateTime? @map("expires_at")
+  createdBy   String?   @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  creator User? @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([keyHash])
+  @@index([isActive])
+  @@map("api_keys")
 }
