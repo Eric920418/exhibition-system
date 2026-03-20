@@ -12,6 +12,8 @@ export const createTeamSchema = z.object({
     .regex(/^[a-z0-9-]+$/, 'Slug 只能包含小寫字母、數字和連字符'),
   leaderId: z.string().uuid('無效的組長 ID').nullable().optional(),
   description: z.string().nullable().optional(),
+  advisor: z.string().max(255).nullable().optional(),
+  teamType: z.enum(['遊戲', '互動', '影視', '行銷']).nullable().optional(),
   displayOrder: z.number().int().min(0).optional().default(0),
 })
 
@@ -23,6 +25,8 @@ export const updateTeamSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/).max(255).optional(),
   leaderId: z.string().uuid().nullable().optional(),
   description: z.string().nullable().optional(),
+  advisor: z.string().max(255).nullable().optional(),
+  teamType: z.enum(['遊戲', '互動', '影視', '行銷']).nullable().optional(),
   displayOrder: z.number().int().min(0).optional(),
 })
 

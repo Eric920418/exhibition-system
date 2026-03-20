@@ -135,6 +135,8 @@ model Team {
   slug         String   @db.VarChar(255)
   leaderId     String?  @map("leader_id")
   description  String?  @db.Text
+  advisor      String?  @db.VarChar(255)
+  teamType     String?  @map("team_type") @db.VarChar(50)
   displayOrder Int      @default(0) @map("display_order")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")

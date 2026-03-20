@@ -47,10 +47,15 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
       team: {
         select: {
           name: true,
+          advisor: true,
+          teamType: true,
+          members: {
+            select: { name: true, role: true, displayOrder: true },
+            orderBy: { displayOrder: 'asc' },
+          },
           exhibition: { select: { id: true, name: true, year: true, slug: true } },
         },
       },
-      creator: { select: { name: true } },
     },
   })
 
@@ -134,16 +139,42 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
             <h1 className="text-3xl font-light text-neutral-900 leading-snug mb-3">
               {artwork.title}
             </h1>
-            {artwork.creator?.name && (
-              <p className="text-sm text-neutral-500 font-light">{artwork.creator.name}</p>
+
+            {artwork.team?.teamType && (
+              <p className="text-xs tracking-widest uppercase text-neutral-400 mt-1">
+                {artwork.team.teamType}
+              </p>
             )}
 
             <div className="my-8 border-t border-neutral-100" />
 
             {artwork.team && (
-              <p className="text-xs tracking-widest uppercase text-neutral-400">
+              <p className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
                 {artwork.team.name}
               </p>
+            )}
+
+            {artwork.team?.advisor && (
+              <div className="mb-4">
+                <p className="text-xs tracking-widest uppercase text-neutral-400 mb-1">指導老師</p>
+                <p className="text-sm text-neutral-600 font-light">{artwork.team.advisor}</p>
+              </div>
+            )}
+
+            {artwork.team?.members && artwork.team.members.length > 0 && (
+              <div>
+                <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">成員</p>
+                <ul className="space-y-1">
+                  {artwork.team.members.map((member) => (
+                    <li key={member.name} className="text-sm text-neutral-600 font-light">
+                      {member.name}
+                      {member.role && (
+                        <span className="text-neutral-400 ml-1 text-xs">/ {member.role}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
 
             <Link

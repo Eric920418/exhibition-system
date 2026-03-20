@@ -13,8 +13,10 @@ const nextConfig = {
   },
   experimental: {
     serverActions: {
-      bodySizeLimit: '10mb',
+      bodySizeLimit: '500mb',
     },
+    // 增加 API route 的請求體大小限制至 500MB（用於影片上傳）
+    proxyClientMaxBodySize: '500mb',
   },
   typescript: {
     // During production build, Next.js will type check your code

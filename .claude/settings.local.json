@@ -20,7 +20,8 @@
       "Bash(npx playwright install:*)",
       "Bash(sudo -S apt install:*)",
       "Bash(pm2 restart:*)",
-      "Bash(pm2 status:*)"
+      "Bash(pm2 status:*)",
+      "Bash(sudo systemctl:*)"
     ],
     "deny": [],
     "ask": []

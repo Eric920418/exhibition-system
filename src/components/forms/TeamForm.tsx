@@ -17,6 +17,8 @@ interface TeamFormProps {
     slug: string
     leaderId?: string | null
     description?: string | null
+    advisor?: string | null
+    teamType?: string | null
     displayOrder: number
     exhibitionId: string
   }
@@ -35,6 +37,8 @@ export default function TeamForm({ team, exhibitionId, leaders = [], mode }: Tea
     slug: team?.slug || '',
     leaderId: team?.leaderId || '',
     description: team?.description || '',
+    advisor: team?.advisor || '',
+    teamType: team?.teamType || '',
     displayOrder: team?.displayOrder || 0,
   })
 
@@ -48,6 +52,8 @@ export default function TeamForm({ team, exhibitionId, leaders = [], mode }: Tea
         slug: formData.slug,
         leaderId: formData.leaderId || null,
         description: formData.description || null,
+        advisor: formData.advisor || null,
+        teamType: formData.teamType || null,
         displayOrder: Number(formData.displayOrder),
       }
 
@@ -196,6 +202,36 @@ export default function TeamForm({ team, exhibitionId, leaders = [], mode }: Tea
               rows={4}
               placeholder="團隊的簡介或說明..."
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="advisor">指導老師</Label>
+            <Input
+              id="advisor"
+              name="advisor"
+              value={formData.advisor}
+              onChange={handleChange}
+              placeholder="請輸入指導老師姓名"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="teamType">類型</Label>
+            <Select
+              value={formData.teamType || '__none__'}
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, teamType: value === '__none__' ? '' : value }))}
+            >
+              <SelectTrigger id="teamType">
+                <SelectValue placeholder="選擇類型" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">未指定</SelectItem>
+                <SelectItem value="遊戲">遊戲</SelectItem>
+                <SelectItem value="互動">互動</SelectItem>
+                <SelectItem value="影視">影視</SelectItem>
+                <SelectItem value="行銷">行銷</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>

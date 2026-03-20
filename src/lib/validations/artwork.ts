@@ -8,8 +8,8 @@ export const createArtworkSchema = z.object({
   teamId: z.string().uuid('無效的團隊 ID'),
   title: z.string().min(1, '作品標題不可為空').max(255, '作品標題過長'),
   concept: z.string().nullable().optional(),
-  mediaUrls: z.array(z.string().url('無效的媒體 URL')).default([]),
-  thumbnailUrl: z.string().url('無效的縮圖 URL').nullable().optional(),
+  mediaUrls: z.array(z.string().min(1)).default([]),
+  thumbnailUrl: z.string().min(1).nullable().optional(),
   displayOrder: z.number().int().min(0).optional().default(0),
   isPublished: z.boolean().optional().default(false),
 })
