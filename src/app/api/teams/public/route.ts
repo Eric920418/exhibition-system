@@ -70,6 +70,18 @@ export async function GET(request: NextRequest) {
             role: true,
           },
         },
+        artworks: {
+          where: { isPublished: true },
+          orderBy: { displayOrder: 'asc' },
+          take: 5,
+          select: {
+            id: true,
+            title: true,
+            thumbnailUrl: true,
+            mediaUrls: true,
+            displayOrder: true,
+          },
+        },
         _count: {
           select: { members: true },
         },
