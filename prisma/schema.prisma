@@ -79,6 +79,7 @@ model Exhibition {
   startDate   DateTime         @map("start_date") @db.Date
   endDate     DateTime         @map("end_date") @db.Date
   status      ExhibitionStatus @default(DRAFT)
+  venueType   VenueType?       @map("venue_type")
   isActive    Boolean          @default(false) @map("is_active")
   posterUrl   String?          @map("poster_url")
   createdBy   String?          @map("created_by")
@@ -105,6 +106,11 @@ enum ExhibitionStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+enum VenueType {
+  OUTDOOR
+  INDOOR
 }
 
 // 展覽成員

@@ -44,6 +44,7 @@ export default function ExhibitionForm({ exhibition, mode }: ExhibitionFormProps
     startDate: exhibition ? formatDate(exhibition.startDate) : '',
     endDate: exhibition ? formatDate(exhibition.endDate) : '',
     status: exhibition?.status || 'DRAFT',
+    venueType: (exhibition as any)?.venueType || '',
     posterUrl: exhibition?.posterUrl || '',
   })
 
@@ -69,6 +70,8 @@ export default function ExhibitionForm({ exhibition, mode }: ExhibitionFormProps
         // 將日期轉換為 ISO 8601 格式
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
+        // venueType 空字串轉為 undefined
+        venueType: formData.venueType || undefined,
       }
 
       console.log(`[ExhibitionForm] ${mode} payload:`, payload)
@@ -252,6 +255,22 @@ export default function ExhibitionForm({ exhibition, mode }: ExhibitionFormProps
             <p className="text-sm text-muted-foreground">
               當前狀態：{formData.status}
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="venueType">展覽類型</Label>
+            <Select
+              value={formData.venueType}
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, venueType: value }))}
+            >
+              <SelectTrigger id="venueType">
+                <SelectValue placeholder="選擇展覽類型" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="OUTDOOR">校外展</SelectItem>
+                <SelectItem value="INDOOR">校內展</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

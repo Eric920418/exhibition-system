@@ -60,6 +60,7 @@ export async function GET(request: NextRequest) {
           startDate: true,
           endDate: true,
           status: true,
+          venueType: true,
           isActive: true,
           posterUrl: true,
           createdAt: true,

@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const exhibitionId = searchParams.get('exhibitionId')
+    const venueType = searchParams.get('venueType')  // 'OUTDOOR' | 'INDOOR'
     const date = searchParams.get('date') || formatDateString(new Date())
 
     // 構建查詢條件
@@ -20,6 +21,7 @@ export async function GET(request: NextRequest) {
       },
       exhibition: {
         status: 'PUBLISHED',
+        ...(venueType ? { venueType } : {}),
       },
     }
 
@@ -41,6 +43,7 @@ export async function GET(request: NextRequest) {
             name: true,
             year: true,
             slug: true,
+            venueType: true,
           },
         },
         reservationConfig: {
@@ -72,7 +75,9 @@ export async function GET(request: NextRequest) {
           id: team.id,
           name: team.name,
           slug: team.slug,
+          teamType: team.teamType,
           description: team.description,
+          venueType: team.exhibition.venueType,
           exhibition: team.exhibition,
           config: {
             slotDurationMinutes: config.slotDurationMinutes,

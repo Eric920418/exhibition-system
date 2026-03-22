@@ -14,6 +14,7 @@ const baseExhibitionSchema = z.object({
   startDate: z.string().datetime().or(z.date()),
   endDate: z.string().datetime().or(z.date()),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
+  venueType: z.enum(['OUTDOOR', 'INDOOR']).optional(),
   posterUrl: z.preprocess(
     (val) => (val === '' ? undefined : val),
     z.string().url().optional()
