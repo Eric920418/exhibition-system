@@ -54,6 +54,12 @@ export async function GET(request: NextRequest) {
             dailyEndTime: true,
           },
         },
+        artworks: {
+          where: { isPublished: true },
+          orderBy: { displayOrder: 'asc' },
+          take: 1,
+          select: { title: true },
+        },
       },
     })
 
@@ -77,6 +83,7 @@ export async function GET(request: NextRequest) {
           slug: team.slug,
           teamType: team.teamType,
           description: team.description,
+          artworkTitle: team.artworks[0]?.title ?? null,
           venueType: team.exhibition.venueType,
           exhibition: team.exhibition,
           config: {
