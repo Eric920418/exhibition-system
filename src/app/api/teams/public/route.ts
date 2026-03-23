@@ -77,6 +77,7 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             title: true,
+            concept: true,
             thumbnailUrl: true,
             mediaUrls: true,
             displayOrder: true,
