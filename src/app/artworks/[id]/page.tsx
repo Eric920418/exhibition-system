@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -13,11 +15,35 @@ function isVideo(url: string) {
   return /\.(mp4|webm|ogg)$/i.test(url)
 }
 
+function Linkify({ text }: { text: string }) {
+  const urlRegex = /(https?:\/\/[^\s<]+)/g
+  const parts = text.split(urlRegex)
+  return (
+    <>
+      {parts.map((part, i) =>
+        urlRegex.test(part) ? (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#36a0ff] hover:text-[#7ac0ff] underline break-all"
+          >
+            {part}
+          </a>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  )
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params
   const artwork = await prisma.artwork.findUnique({
     where: { id, isPublished: true },
-    select: { title: true, concept: true, thumbnailUrl: true },
+    select: { title: true, concept: true, conceptShort: true, thumbnailUrl: true },
   })
 
   if (!artwork) return { title: '作品不存在' }
@@ -42,6 +68,7 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
       id: true,
       title: true,
       concept: true,
+      conceptShort: true,
       thumbnailUrl: true,
       mediaUrls: true,
       team: {
@@ -69,28 +96,28 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
   const exhibition = artwork.team?.exhibition
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#fff4f1]">
       {/* Sticky Header */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-neutral-100">
+      <header className="sticky top-0 z-50 bg-white border-b border-[rgba(52,58,64,0.12)]">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center gap-3">
           <Link
             href="/artworks"
-            className="text-neutral-400 hover:text-neutral-900 transition-colors"
-            aria-label="返回作品集"
+            className="text-[#828282] hover:text-[#f19d2f] transition-colors duration-150"
+            aria-label="返回展覽作品"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
-          <span className="text-neutral-200 text-sm">/</span>
+          <span className="text-[rgba(52,58,64,0.2)] text-sm">/</span>
           <Link
             href="/artworks"
-            className="text-xs tracking-widest uppercase text-neutral-400 hover:text-neutral-900 transition-colors"
+            className="text-sm text-[#828282] hover:text-[#f19d2f] transition-colors duration-150 font-light"
           >
-            作品集
+            展覽作品
           </Link>
-          <span className="text-neutral-200 text-sm">/</span>
-          <span className="text-xs tracking-widest uppercase text-neutral-900 truncate max-w-xs">
+          <span className="text-[rgba(52,58,64,0.2)] text-sm">/</span>
+          <span className="text-sm font-medium text-[#333] truncate max-w-xs">
             {artwork.title}
           </span>
         </div>
@@ -98,7 +125,7 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
 
       {/* Hero Media */}
       {primaryUrl && (
-        <section className="bg-neutral-50 flex items-center justify-center py-12 px-6">
+        <section className="bg-white flex items-center justify-center py-12 px-6">
           <div className="max-w-5xl w-full" {...scrollAnimate('scale-reveal')}>
             {isVideo(primaryUrl) ? (
               <video
@@ -108,13 +135,13 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
                 loop
                 playsInline
                 controls
-                className="w-full max-h-[70vh] object-contain mx-auto block"
+                className="w-full max-h-[70vh] object-contain mx-auto block rounded-[15px]"
               />
             ) : (
               <img
                 src={primaryUrl}
                 alt={artwork.title}
-                className="w-full max-h-[70vh] object-contain mx-auto block"
+                className="w-full max-h-[70vh] object-contain mx-auto block rounded-[15px]"
               />
             )}
           </div>
@@ -125,51 +152,51 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
       <section className="max-w-5xl mx-auto px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* Left: metadata */}
-          <div {...scrollAnimate('fade-in-up')}>
+          <div className="bg-white rounded-[12px] border border-[rgba(52,58,64,0.12)] p-6" {...scrollAnimate('fade-in-up')}>
             {exhibition && (
-              <p className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
+              <p className="mb-4">
                 <Link
                   href={`/artworks?exhibition=${exhibition.id}`}
-                  className="hover:text-neutral-900 transition-colors"
+                  className="inline-block px-3 py-1 text-xs font-medium text-[#00BCD4] bg-[#00BCD4]/10 rounded-[8px] hover:bg-[#00BCD4]/20 transition-colors duration-150"
                 >
                   {exhibition.name} {exhibition.year}
                 </Link>
               </p>
             )}
-            <h1 className="text-3xl font-light text-neutral-900 leading-snug mb-3">
+            <h1 className="text-3xl font-medium text-[#333] leading-snug mb-3">
               {artwork.title}
             </h1>
 
             {artwork.team?.teamType && (
-              <p className="text-xs tracking-widest uppercase text-neutral-400 mt-1">
+              <p className="text-sm text-[#828282] mt-1 font-light">
                 {artwork.team.teamType}
               </p>
             )}
 
-            <div className="my-8 border-t border-neutral-100" />
+            <div className="my-6 border-t border-[rgba(52,58,64,0.12)]" />
 
             {artwork.team && (
-              <p className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
+              <p className="text-sm font-medium text-[#4f4f4f] mb-4">
                 {artwork.team.name}
               </p>
             )}
 
             {artwork.team?.advisor && (
               <div className="mb-4">
-                <p className="text-xs tracking-widest uppercase text-neutral-400 mb-1">指導老師</p>
-                <p className="text-sm text-neutral-600 font-light">{artwork.team.advisor}</p>
+                <p className="text-xs font-medium text-[#828282] mb-1">指導老師</p>
+                <p className="text-sm text-[#4f4f4f] font-light">{artwork.team.advisor}</p>
               </div>
             )}
 
             {artwork.team?.members && artwork.team.members.length > 0 && (
               <div>
-                <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">成員</p>
-                <ul className="space-y-1">
+                <p className="text-xs font-medium text-[#828282] mb-2">成員</p>
+                <ul className="space-y-1.5">
                   {artwork.team.members.map((member) => (
-                    <li key={member.name} className="text-sm text-neutral-600 font-light">
+                    <li key={member.name} className="text-sm text-[#4f4f4f] font-light">
                       {member.name}
                       {member.role && (
-                        <span className="text-neutral-400 ml-1 text-xs">/ {member.role}</span>
+                        <span className="text-[#828282] ml-1.5 text-xs">/ {member.role}</span>
                       )}
                     </li>
                   ))}
@@ -179,27 +206,42 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
 
             <Link
               href="/artworks"
-              className="inline-flex items-center gap-2 mt-8 text-xs tracking-widest uppercase text-neutral-500 hover:text-neutral-900 transition-colors"
+              className="inline-flex items-center gap-2 mt-8 px-6 py-3 bg-[#00BCD4] text-white text-sm font-medium rounded-[16px] hover:bg-[#009aae] transition-colors duration-150 shadow-sm hover:shadow-md"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
               </svg>
-              返回作品集
+              返回展覽作品
             </Link>
           </div>
 
-          {/* Right: concept */}
-          <div className="lg:col-span-2" {...scrollAnimate('accordion')}>
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-6">
-              藝術家陳述
-            </p>
-            {artwork.concept ? (
-              <p className="text-lg font-light text-neutral-700 leading-relaxed whitespace-pre-wrap">
-                {artwork.concept}
-              </p>
-            ) : (
-              <p className="text-lg font-light text-neutral-300 italic">— 無說明 —</p>
+          {/* Right: concepts */}
+          <div className="lg:col-span-2 space-y-6" {...scrollAnimate('accordion')}>
+            {/* Short concept */}
+            {artwork.conceptShort && (
+              <div className="bg-white rounded-[12px] border border-[rgba(52,58,64,0.12)] p-6">
+                <p className="text-xs font-medium text-[#828282] mb-4 uppercase tracking-wider">
+                  作品簡介
+                </p>
+                <p className="text-base text-[#4f4f4f] leading-relaxed whitespace-pre-wrap font-light">
+                  <Linkify text={artwork.conceptShort} />
+                </p>
+              </div>
             )}
+
+            {/* Long concept */}
+            <div className="bg-white rounded-[12px] border border-[rgba(52,58,64,0.12)] p-6">
+              <p className="text-xs font-medium text-[#828282] mb-4 uppercase tracking-wider">
+                作品介紹
+              </p>
+              {artwork.concept ? (
+                <p className="text-base text-[#4f4f4f] leading-relaxed whitespace-pre-wrap font-light">
+                  <Linkify text={artwork.concept} />
+                </p>
+              ) : (
+                <p className="text-base text-[#828282] italic font-light">— 無說明 —</p>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -207,46 +249,45 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
       {/* Additional Media */}
       {additionalMedia.length > 0 && (
         <section className="max-w-5xl mx-auto px-6 lg:px-8 pb-24">
-          <div className="border-t border-neutral-100 pt-12">
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-8">
-              更多媒體
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {additionalMedia.map((url, i) => (
-                <div
-                  key={url}
-                  data-animate="fade-in-up"
-                  data-animate-delay={((i % 5) + 1) as 1 | 2 | 3 | 4 | 5}
-                >
-                  {isVideo(url) ? (
-                    <video
-                      src={url}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      controls
-                      className="w-full object-cover"
-                    />
-                  ) : (
-                    <img
-                      src={url}
-                      alt={`${artwork.title} — 媒體 ${i + 1}`}
-                      className="w-full object-cover"
-                      loading="lazy"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
+          <p className="text-xs font-medium text-[#828282] mb-8 uppercase tracking-wider">
+            更多媒體
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {additionalMedia.map((url, i) => (
+              <div
+                key={url}
+                className="rounded-[15px] overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 bg-white"
+                data-animate="fade-in-up"
+                data-animate-delay={((i % 5) + 1) as 1 | 2 | 3 | 4 | 5}
+              >
+                {isVideo(url) ? (
+                  <video
+                    src={url}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    controls
+                    className="w-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={url}
+                    alt={`${artwork.title} — 媒體 ${i + 1}`}
+                    className="w-full object-cover"
+                    loading="lazy"
+                  />
+                )}
+              </div>
+            ))}
           </div>
         </section>
       )}
 
       {/* Footer */}
-      <footer className="border-t border-neutral-100">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8 text-center">
-          <p className="text-xs text-neutral-400 tracking-widest uppercase">
+      <footer className="bg-[#212529]">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10 text-center">
+          <p className="text-sm text-white/80 font-light">
             © {new Date().getFullYear()} 展覽管理系統
           </p>
         </div>

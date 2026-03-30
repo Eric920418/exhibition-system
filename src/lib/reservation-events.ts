@@ -1,4 +1,4 @@
-import { redis } from './redis'
+import { redis, RedisKeys } from './redis'
 
 /**
  * 檢查 Redis 是否可用
@@ -39,7 +39,7 @@ export interface ReservationEvent {
 }
 
 /**
- * Redis Pub/Sub 頻道名稱
+ * Redis 頻道名稱（用於事件列表）
  */
 export const ReservationChannels = {
   // 組別叫號更新頻道（大螢幕、工作人員訂閱）
@@ -50,7 +50,8 @@ export const ReservationChannels = {
 }
 
 /**
- * 發布預約事件
+ * 發布預約事件（使用 Redis List 代替 Pub/Sub）
+ * Upstash 不支援持久 TCP 連線的 Pub/Sub，改用 List + Counter 模式
  */
 export async function publishReservationEvent(event: ReservationEvent): Promise<void> {
   const redisAvailable = await isRedisAvailable()
@@ -61,49 +62,78 @@ export async function publishReservationEvent(event: ReservationEvent): Promise<
 
   try {
     const message = JSON.stringify(event)
+    const teamChannel = ReservationChannels.teamServing(event.teamId)
+    const globalChannel = ReservationChannels.globalServing()
 
-    // 發布到組別頻道
-    await redis.publish(ReservationChannels.teamServing(event.teamId), message)
+    const teamListKey = RedisKeys.sseEvents(teamChannel)
+    const globalListKey = RedisKeys.sseEvents(globalChannel)
+    const teamCounterKey = RedisKeys.sseEventCounter(teamChannel)
+    const globalCounterKey = RedisKeys.sseEventCounter(globalChannel)
 
-    // 同時發布到全域頻道
-    await redis.publish(ReservationChannels.globalServing(), message)
+    // 使用 pipeline 一次送出所有命令
+    const pipe = redis.pipeline()
+
+    // 推入事件到組別列表
+    pipe.lpush(teamListKey, message)
+    pipe.ltrim(teamListKey, 0, 99) // 保留最近 100 筆
+    pipe.expire(teamListKey, 86400)
+    pipe.incr(teamCounterKey)
+    pipe.expire(teamCounterKey, 86400)
+
+    // 推入事件到全域列表
+    pipe.lpush(globalListKey, message)
+    pipe.ltrim(globalListKey, 0, 99)
+    pipe.expire(globalListKey, 86400)
+    pipe.incr(globalCounterKey)
+    pipe.expire(globalCounterKey, 86400)
+
+    await pipe.exec()
   } catch (error) {
     console.warn('Failed to publish reservation event:', error)
   }
 }
 
 /**
- * 創建 SSE 訂閱者
- * @param teamId 組別 ID（可選，不傳則訂閱全域）
- * @param onMessage 訊息回調
- * @returns 取消訂閱函數
+ * 輪詢新事件
+ * @param channel 頻道名稱
+ * @param lastCounter 上次讀取時的 counter 值
+ * @returns 新事件列表和最新 counter 值
  */
-export async function createSSESubscriber(
-  teamId: string | null,
-  onMessage: (event: ReservationEvent) => void
-): Promise<() => void> {
-  // 創建獨立的 Redis 連接用於訂閱
-  const subscriber = redis.duplicate()
+export async function pollEvents(
+  channel: string,
+  lastCounter: number
+): Promise<{ events: ReservationEvent[]; counter: number }> {
+  try {
+    const counterKey = RedisKeys.sseEventCounter(channel)
+    const listKey = RedisKeys.sseEvents(channel)
 
-  const channel = teamId
-    ? ReservationChannels.teamServing(teamId)
-    : ReservationChannels.globalServing()
+    const currentCounter = await redis.get<number>(counterKey) ?? 0
 
-  await subscriber.subscribe(channel)
-
-  subscriber.on('message', (ch, message) => {
-    try {
-      const event = JSON.parse(message) as ReservationEvent
-      onMessage(event)
-    } catch (error) {
-      console.error('Failed to parse reservation event:', error)
+    if (currentCounter === lastCounter) {
+      return { events: [], counter: currentCounter }
     }
-  })
 
-  // 返回取消訂閱函數
-  return async () => {
-    await subscriber.unsubscribe(channel)
-    await subscriber.quit()
+    // 計算需要讀取的事件數量
+    const newEventCount = currentCounter - lastCounter
+    const fetchCount = Math.min(newEventCount, 50) // 最多一次取 50 筆
+
+    const rawEvents = await redis.lrange(listKey, 0, fetchCount - 1)
+
+    const events: ReservationEvent[] = rawEvents
+      .map((raw) => {
+        try {
+          return typeof raw === 'string' ? JSON.parse(raw) : raw
+        } catch {
+          return null
+        }
+      })
+      .filter((e): e is ReservationEvent => e !== null)
+      .reverse() // 最舊的在前
+
+    return { events, counter: currentCounter }
+  } catch (error) {
+    console.warn('Failed to poll events:', error)
+    return { events: [], counter: lastCounter }
   }
 }
 

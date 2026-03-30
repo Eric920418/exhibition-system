@@ -1,7 +1,9 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getQueueStats, formatDateString } from '@/lib/reservation-utils'
-import { createSSESubscriber, ReservationEvent } from '@/lib/reservation-events'
+import { pollEvents, ReservationChannels, ReservationEvent } from '@/lib/reservation-events'
+
+export const maxDuration = 300
 
 type RouteContext = {
   params: Promise<{ teamId: string }>
@@ -10,6 +12,7 @@ type RouteContext = {
 /**
  * GET /api/reservations/stream/display/[teamId]
  * 單組別大螢幕 SSE 串流（公開）
+ * 使用 Redis List 輪詢代替 Pub/Sub
  */
 export async function GET(request: NextRequest, context: RouteContext) {
   const { teamId } = await context.params
@@ -24,8 +27,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     return new Response('Team not found', { status: 404 })
   }
 
-  let unsubscribe: (() => void) | null = null
   let heartbeatInterval: NodeJS.Timeout | null = null
+  let pollInterval: NodeJS.Timeout | null = null
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -86,25 +89,41 @@ export async function GET(request: NextRequest, context: RouteContext) {
         }
       }, 30000)
 
-      // 訂閱 Redis Pub/Sub
+      // 輪詢 Redis List 取得新事件（每 1.5 秒）
+      const channel = ReservationChannels.teamServing(teamId)
+      let lastCounter = 0
+
+      // 取得初始 counter
       try {
-        unsubscribe = await createSSESubscriber(teamId, (event: ReservationEvent) => {
-          sendMessage({
-            type: event.type,
-            data: event.data,
-          })
-        })
-      } catch (error) {
-        console.error('Failed to subscribe:', error)
+        const result = await pollEvents(channel, 0)
+        lastCounter = result.counter
+      } catch {
+        // ignore
       }
+
+      pollInterval = setInterval(async () => {
+        try {
+          const { events, counter } = await pollEvents(channel, lastCounter)
+          lastCounter = counter
+
+          for (const event of events) {
+            sendMessage({
+              type: event.type,
+              data: event.data,
+            })
+          }
+        } catch (error) {
+          console.warn('Poll error:', error)
+        }
+      }, 1500)
     },
     cancel() {
       // 清理資源
       if (heartbeatInterval) {
         clearInterval(heartbeatInterval)
       }
-      if (unsubscribe) {
-        unsubscribe()
+      if (pollInterval) {
+        clearInterval(pollInterval)
       }
     },
   })

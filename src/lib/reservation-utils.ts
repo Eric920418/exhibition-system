@@ -59,8 +59,8 @@ export async function getCurrentSequenceNumber(
   if (redisAvailable) {
     try {
       const key = RedisKeys.reservationSequence(teamId, date)
-      const current = await redis.get(key)
-      if (current) return parseInt(current, 10)
+      const current = await redis.get<number>(key)
+      if (current !== null && current !== undefined) return current
     } catch (error) {
       console.warn('Redis getCurrentSequenceNumber failed:', error)
     }
@@ -182,8 +182,8 @@ export async function checkPhoneRateLimit(
   if (redisAvailable) {
     try {
       const key = RedisKeys.reservationRateLimit(phone, date)
-      const current = await redis.get(key)
-      const count = current ? parseInt(current, 10) : 0
+      const current = await redis.get<number>(key)
+      const count = current ?? 0
 
       if (count >= maxPerDay) {
         return { allowed: false, current: count }

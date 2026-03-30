@@ -1,18 +1,25 @@
-import Redis from 'ioredis'
-import { env } from '@/env'
+import { Redis } from '@upstash/redis'
 
-const globalForRedis = globalThis as unknown as {
-  redis: Redis | undefined
+function createRedisClient(): Redis {
+  const url = process.env.KV_REST_API_URL
+  const token = process.env.KV_REST_API_TOKEN
+
+  if (!url || !token) {
+    // 回傳一個代理物件，在實際呼叫時才拋錯（避免 build 時 crash）
+    return new Proxy({} as Redis, {
+      get(_, prop) {
+        if (prop === 'ping') {
+          return async () => { throw new Error('Redis not configured') }
+        }
+        return async () => { throw new Error('Redis not configured: KV_REST_API_URL or KV_REST_API_TOKEN missing') }
+      },
+    })
+  }
+
+  return new Redis({ url, token })
 }
 
-export const redis =
-  globalForRedis.redis ??
-  new Redis(env.REDIS_URL, {
-    maxRetriesPerRequest: 3,
-    lazyConnect: true,
-  })
-
-if (env.NODE_ENV !== 'production') globalForRedis.redis = redis
+export const redis = createRedisClient()
 
 // Redis 鍵值命名空間
 export const RedisKeys = {
@@ -36,6 +43,7 @@ export const RedisKeys = {
   exhibitionPublic: (exhibitionId: string) => `cache:exhibition:${exhibitionId}`,
   teamArtworks: (teamId: string) => `cache:artworks:${teamId}`,
 
-  // WebSocket 連線 (TTL: 10分鐘)
-  socketConnection: (socketId: string) => `socket:${socketId}`,
+  // SSE 事件列表 (TTL: 1天)
+  sseEvents: (channel: string) => `sse:events:${channel}`,
+  sseEventCounter: (channel: string) => `sse:counter:${channel}`,
 }

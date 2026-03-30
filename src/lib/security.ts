@@ -57,7 +57,7 @@ export async function checkRateLimit(
     const count = await redis.zcard(redisKey)
 
     if (count >= limit) {
-      const oldestRequest = await redis.zrange(redisKey, 0, 0, 'WITHSCORES')
+      const oldestRequest = await redis.zrange<string[]>(redisKey, 0, 0, { withScores: true })
       const resetTime = oldestRequest.length > 1
         ? parseInt(oldestRequest[1]) + windowMs
         : now + windowMs
@@ -69,7 +69,7 @@ export async function checkRateLimit(
       }
     }
 
-    await redis.zadd(redisKey, now, `${now}:${Math.random()}`)
+    await redis.zadd(redisKey, { score: now, member: `${now}:${Math.random()}` })
     await redis.expire(redisKey, Math.ceil(windowMs / 1000))
 
     return {

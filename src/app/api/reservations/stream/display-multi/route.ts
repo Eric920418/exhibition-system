@@ -1,11 +1,14 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getQueueStats, formatDateString } from '@/lib/reservation-utils'
-import { createSSESubscriber, ReservationEvent } from '@/lib/reservation-events'
+import { pollEvents, ReservationChannels, ReservationEvent } from '@/lib/reservation-events'
+
+export const maxDuration = 300
 
 /**
  * GET /api/reservations/stream/display-multi
  * 多組別大螢幕 SSE 串流（公開）
+ * 使用 Redis List 輪詢代替 Pub/Sub
  *
  * Query params:
  * - teamIds: 逗號分隔的組別 ID 列表（可選，不傳則獲取所有啟用預約的組別）
@@ -41,8 +44,8 @@ export async function GET(request: NextRequest) {
     return new Response('No teams found', { status: 404 })
   }
 
-  let unsubscribe: (() => void) | null = null
   let heartbeatInterval: NodeJS.Timeout | null = null
+  let pollInterval: NodeJS.Timeout | null = null
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -111,33 +114,49 @@ export async function GET(request: NextRequest) {
         }
       }, 30000)
 
-      // 訂閱全域頻道
+      // 輪詢全域頻道取得新事件（每 1.5 秒）
+      const channel = ReservationChannels.globalServing()
+      let lastCounter = 0
+
+      // 取得初始 counter
       try {
-        unsubscribe = await createSSESubscriber(null, (event: ReservationEvent) => {
-          // 只轉發在 teamIds 中的事件
-          if (teamIds.includes(event.teamId)) {
-            const team = teams.find((t) => t.id === event.teamId)
-            sendMessage({
-              type: event.type,
-              data: {
-                ...event.data,
-                teamId: event.teamId,
-                teamName: team?.name,
-              },
-            })
-          }
-        })
-      } catch (error) {
-        console.error('Failed to subscribe:', error)
+        const result = await pollEvents(channel, 0)
+        lastCounter = result.counter
+      } catch {
+        // ignore
       }
+
+      pollInterval = setInterval(async () => {
+        try {
+          const { events, counter } = await pollEvents(channel, lastCounter)
+          lastCounter = counter
+
+          for (const event of events) {
+            // 只轉發在 teamIds 中的事件
+            if (teamIds.includes(event.teamId)) {
+              const team = teams.find((t) => t.id === event.teamId)
+              sendMessage({
+                type: event.type,
+                data: {
+                  ...event.data,
+                  teamId: event.teamId,
+                  teamName: team?.name,
+                },
+              })
+            }
+          }
+        } catch (error) {
+          console.warn('Poll error:', error)
+        }
+      }, 1500)
     },
     cancel() {
       // 清理資源
       if (heartbeatInterval) {
         clearInterval(heartbeatInterval)
       }
-      if (unsubscribe) {
-        unsubscribe()
+      if (pollInterval) {
+        clearInterval(pollInterval)
       }
     },
   })

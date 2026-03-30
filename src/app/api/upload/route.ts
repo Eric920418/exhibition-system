@@ -1,20 +1,10 @@
 import { NextRequest } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
-
-export const config = {
-  api: {
-    bodyParser: false,
-    responseLimit: false,
-  },
-}
-
-// 增加上傳大小限制至 500MB
-export const maxDuration = 60
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleApiError, requireAuth } from '@/lib/api-response'
-import { generateUniqueFileName, getFileCategory, validateFileSize } from '@/lib/minio'
+import { generateUniqueFileName, getFileCategory, validateFileSize, uploadFile } from '@/lib/minio'
+
+export const maxDuration = 60
 
 const ALLOWED_FILE_TYPES: Record<string, string[]> = {
   image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
@@ -30,7 +20,7 @@ const ALLOWED_FILE_TYPES: Record<string, string[]> = {
 
 /**
  * POST /api/upload
- * 上傳檔案（儲存至本地 public/uploads/）
+ * 上傳檔案（儲存至 Vercel Blob）
  */
 export async function POST(request: NextRequest) {
   try {
@@ -62,17 +52,12 @@ export async function POST(request: NextRequest) {
       return apiError(`檔案大小超過限制（${limits[type as keyof typeof limits]}）`, 400)
     }
 
-    // 生成唯一檔案名並儲存到本地
+    // 生成唯一檔案名並上傳至 Vercel Blob
     const fileName = generateUniqueFileName(file.name)
     const subDir = `${type}s` // images/ videos/ documents/
-    const uploadDir = join(process.cwd(), 'public', 'uploads', subDir)
+    const blobPath = `uploads/${subDir}/${fileName}`
 
-    await mkdir(uploadDir, { recursive: true })
-
-    const buffer = Buffer.from(await file.arrayBuffer())
-    await writeFile(join(uploadDir, fileName), buffer)
-
-    const fileUrl = `/uploads/${subDir}/${fileName}`
+    const fileUrl = await uploadFile(file, blobPath, file.type)
     const fileCategory = getFileCategory(file.type)
 
     // 記錄到資料庫（如果有關聯 ID）
@@ -114,7 +99,7 @@ export async function POST(request: NextRequest) {
     return apiSuccess(
       {
         fileName,
-        filePath: `uploads/${subDir}/${fileName}`,
+        filePath: blobPath,
         fileUrl,
         fileType: file.type,
         fileSize: file.size,
@@ -131,7 +116,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/upload?fileName=xxx
- * 獲取檔案的預簽名下載 URL
+ * 獲取檔案的下載 URL
  */
 export async function GET(request: NextRequest) {
   try {
@@ -145,10 +130,10 @@ export async function GET(request: NextRequest) {
       return apiError('請提供檔案名稱', 400)
     }
 
-    // 本地儲存直接回傳靜態 URL
+    // Vercel Blob URL 直接可存取
     return apiSuccess({
       fileName,
-      downloadUrl: `/uploads/${fileName}`,
+      downloadUrl: fileName,
     })
   } catch (error) {
     return handleApiError(error)

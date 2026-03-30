@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
@@ -36,6 +38,7 @@ export default async function ReservationConfigPage({
           id: true,
           name: true,
           year: true,
+          venueType: true,
           createdBy: true,
         },
       },
@@ -89,6 +92,8 @@ export default async function ReservationConfigPage({
         <ReservationConfigForm
           teamId={teamId}
           teamName={team.name}
+          exhibitionId={team.exhibition.id}
+          venueType={team.exhibition.venueType}
           config={existingConfig}
           mode={formMode}
         />

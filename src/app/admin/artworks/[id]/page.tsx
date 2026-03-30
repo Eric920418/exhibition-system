@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
@@ -158,10 +160,20 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
               {new Date(artwork.createdAt).toLocaleString('zh-TW')}
             </p>
           </div>
+          {artwork.conceptShort && (
+            <div className="col-span-2">
+              <h3 className="text-sm font-medium text-gray-500 mb-1">
+                作品簡介（短）
+              </h3>
+              <p className="text-gray-800 whitespace-pre-wrap">
+                {artwork.conceptShort}
+              </p>
+            </div>
+          )}
           {artwork.concept && (
             <div className="col-span-2">
               <h3 className="text-sm font-medium text-gray-500 mb-1">
-                作品概念
+                作品介紹（長）
               </h3>
               <p className="text-gray-800 whitespace-pre-wrap">
                 {artwork.concept}

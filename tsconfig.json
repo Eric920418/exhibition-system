@@ -44,6 +44,8 @@
     "**/*.spec.ts",
     "**/*.spec.tsx",
     "src/__tests__/**/*",
-    "e2e/**/*"
+    "e2e/**/*",
+    "prisma/seed.ts",
+    "prisma/import-groups.ts"
   ]
 }

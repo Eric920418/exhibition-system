@@ -1,24 +1,4 @@
-import * as Minio from 'minio'
-import { env } from '@/env'
-
-/**
- * MinIO 客戶端配置
- * 如果環境變數未設置，則返回 null（可選功能）
- */
-export const minioClient = env.MINIO_ENDPOINT && env.MINIO_ACCESS_KEY && env.MINIO_SECRET_KEY
-  ? new Minio.Client({
-      endPoint: env.MINIO_ENDPOINT,
-      port: env.MINIO_PORT ? parseInt(env.MINIO_PORT) : 9000,
-      useSSL: env.MINIO_USE_SSL === 'true',
-      accessKey: env.MINIO_ACCESS_KEY,
-      secretKey: env.MINIO_SECRET_KEY,
-    })
-  : null
-
-/**
- * 預設 Bucket 名稱
- */
-export const DEFAULT_BUCKET = env.MINIO_BUCKET_NAME || 'exhibition-bucket'
+import { put, del } from '@vercel/blob'
 
 /**
  * 檔案類型限制
@@ -42,51 +22,6 @@ export const MAX_FILE_SIZE = {
   image: 10 * 1024 * 1024, // 10MB
   video: 500 * 1024 * 1024, // 500MB
   document: 20 * 1024 * 1024, // 20MB
-}
-
-/**
- * 初始化 MinIO Bucket
- */
-export async function initMinIOBucket() {
-  if (!minioClient) {
-    console.warn('MinIO 未配置，跳過 Bucket 初始化')
-    return false
-  }
-
-  try {
-    const bucketExists = await minioClient.bucketExists(DEFAULT_BUCKET)
-
-    if (!bucketExists) {
-      await minioClient.makeBucket(DEFAULT_BUCKET, 'us-east-1')
-      console.log(`✅ MinIO Bucket "${DEFAULT_BUCKET}" 創建成功`)
-
-      // 設置 Bucket 為公開讀取（可選）
-      const policy = {
-        Version: '2012-10-17',
-        Statement: [
-          {
-            Effect: 'Allow',
-            Principal: { AWS: ['*'] },
-            Action: ['s3:GetObject'],
-            Resource: [`arn:aws:s3:::${DEFAULT_BUCKET}/*`],
-          },
-        ],
-      }
-
-      await minioClient.setBucketPolicy(
-        DEFAULT_BUCKET,
-        JSON.stringify(policy)
-      )
-      console.log(`✅ MinIO Bucket 策略設置成功`)
-    } else {
-      console.log(`✅ MinIO Bucket "${DEFAULT_BUCKET}" 已存在`)
-    }
-
-    return true
-  } catch (error) {
-    console.error('❌ MinIO Bucket 初始化失敗:', error)
-    return false
-  }
 }
 
 /**
@@ -130,61 +65,28 @@ export function validateFileSize(size: number, category: 'image' | 'video' | 'do
 }
 
 /**
- * 上傳檔案到 MinIO
+ * 上傳檔案到 Vercel Blob
  */
 export async function uploadFile(
-  file: Buffer | ReadableStream,
+  file: Buffer | File | ReadableStream,
   fileName: string,
   mimeType: string,
-  metadata?: Record<string, string>
 ): Promise<string> {
-  if (!minioClient) {
-    throw new Error('MinIO 未配置')
-  }
+  const blob = await put(fileName, file, {
+    access: 'public',
+    contentType: mimeType,
+    addRandomSuffix: false,
+  })
 
-  try {
-    const metaData = {
-      'Content-Type': mimeType,
-      ...metadata,
-    }
-
-    // 如果是 Buffer，需要提供 size
-    if (Buffer.isBuffer(file)) {
-      await minioClient.putObject(
-        DEFAULT_BUCKET,
-        fileName,
-        file,
-        file.length,
-        metaData
-      )
-    } else {
-      // ReadableStream 的情況
-      await minioClient.putObject(
-        DEFAULT_BUCKET,
-        fileName,
-        file as any,
-        metaData as any
-      )
-    }
-
-    // 返回檔案 URL
-    return `${env.MINIO_ENDPOINT}:${env.MINIO_PORT || 9000}/${DEFAULT_BUCKET}/${fileName}`
-  } catch (error) {
-    console.error('檔案上傳失敗:', error)
-    throw new Error('檔案上傳失敗')
-  }
+  return blob.url
 }
 
 /**
  * 刪除檔案
  */
-export async function deleteFile(fileName: string): Promise<void> {
-  if (!minioClient) {
-    throw new Error('MinIO 未配置')
-  }
-
+export async function deleteFile(fileUrl: string): Promise<void> {
   try {
-    await minioClient.removeObject(DEFAULT_BUCKET, fileName)
+    await del(fileUrl)
   } catch (error) {
     console.error('檔案刪除失敗:', error)
     throw new Error('檔案刪除失敗')
@@ -192,17 +94,8 @@ export async function deleteFile(fileName: string): Promise<void> {
 }
 
 /**
- * 獲取檔案下載 URL（有效期 7 天）
+ * 獲取檔案 URL（Vercel Blob URL 直接可存取）
  */
-export async function getPresignedUrl(fileName: string, expirySeconds = 7 * 24 * 60 * 60): Promise<string> {
-  if (!minioClient) {
-    throw new Error('MinIO 未配置')
-  }
-
-  try {
-    return await minioClient.presignedGetObject(DEFAULT_BUCKET, fileName, expirySeconds)
-  } catch (error) {
-    console.error('生成預簽名 URL 失敗:', error)
-    throw new Error('生成下載連結失敗')
-  }
+export async function getPresignedUrl(fileUrl: string): Promise<string> {
+  return fileUrl
 }

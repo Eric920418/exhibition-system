@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ==================== 核心表 ====================
@@ -183,6 +184,7 @@ model Artwork {
   teamId       String   @map("team_id")
   title        String   @db.VarChar(255)
   concept      String?  @db.Text
+  conceptShort String?  @db.VarChar(500) @map("concept_short")
   mediaUrls    String[] @map("media_urls")
   thumbnailUrl String?  @map("thumbnail_url")
   displayOrder Int      @default(0) @map("display_order")

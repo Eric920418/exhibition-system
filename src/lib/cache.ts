@@ -26,16 +26,16 @@ export async function getOrSet<T>(
 ): Promise<T> {
   try {
     // 嘗試從快取獲取
-    const cached = await redis.get(key)
-    if (cached) {
-      return JSON.parse(cached) as T
+    const cached = await redis.get<T>(key)
+    if (cached !== null && cached !== undefined) {
+      return cached
     }
 
     // 快取未命中，執行 fetcher
     const data = await fetcher()
 
     // 存入快取
-    await redis.setex(key, ttlSeconds, JSON.stringify(data))
+    await redis.set(key, data, { ex: ttlSeconds })
 
     return data
   } catch (error) {
@@ -57,14 +57,19 @@ export async function invalidateCache(key: string): Promise<void> {
 }
 
 /**
- * 批量刪除快取（使用模式匹配）
+ * 批量刪除快取（使用 SCAN 迭代）
  */
 export async function invalidateCachePattern(pattern: string): Promise<void> {
   try {
-    const keys = await redis.keys(pattern)
-    if (keys.length > 0) {
-      await redis.del(...keys)
-    }
+    let cursor = 0
+    do {
+      const result = await redis.scan(cursor, { match: pattern, count: 100 })
+      cursor = Number(result[0])
+      const keys = result[1] as string[]
+      if (keys.length > 0) {
+        await redis.del(...keys)
+      }
+    } while (cursor !== 0)
   } catch (error) {
     console.error(`Cache pattern invalidation error for ${pattern}:`, error)
   }
@@ -139,16 +144,11 @@ export async function getCacheStats(): Promise<{
   keyCount: number
 }> {
   try {
-    const info = await redis.info('memory')
-    const memoryMatch = info.match(/used_memory_human:(\S+)/)
-    const memoryUsage = memoryMatch ? memoryMatch[1] : 'N/A'
-
-    const keyCount = await redis.dbsize()
-
+    await redis.ping()
     return {
       connected: true,
-      memoryUsage,
-      keyCount,
+      memoryUsage: 'N/A',
+      keyCount: 0,
     }
   } catch {
     return {

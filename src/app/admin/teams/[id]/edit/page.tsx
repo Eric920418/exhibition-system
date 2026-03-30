@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
@@ -78,6 +80,8 @@ export default async function EditTeamPage({ params }: PageProps) {
           description: team.description,
           displayOrder: team.displayOrder,
           exhibitionId: team.exhibitionId,
+          advisor: team.advisor,
+          teamType: team.teamType,
         }}
         leaders={leaders}
       />

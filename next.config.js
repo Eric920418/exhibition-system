@@ -4,19 +4,15 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '9000',
-        pathname: '/exhibition-bucket/**',
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com',
       },
     ],
   },
   experimental: {
     serverActions: {
-      bodySizeLimit: '500mb',
+      bodySizeLimit: '4mb',
     },
-    // 增加 API route 的請求體大小限制至 500MB（用於影片上傳）
-    proxyClientMaxBodySize: '500mb',
   },
   typescript: {
     // During production build, Next.js will type check your code

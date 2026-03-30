@@ -8,21 +8,18 @@ export const env = createEnv({
   server: {
     // Database
     DATABASE_URL: z.string().url(),
+    DIRECT_URL: z.string().url().optional(),
 
     // NextAuth
     NEXTAUTH_SECRET: z.string().min(32, "NEXTAUTH_SECRET 至少需要 32 個字元"),
-    NEXTAUTH_URL: z.string().url(),
+    NEXTAUTH_URL: z.string().url().optional(),
 
-    // Redis
-    REDIS_URL: z.string().url(),
+    // Upstash Redis (Vercel KV)
+    KV_REST_API_URL: z.string().url().optional(),
+    KV_REST_API_TOKEN: z.string().optional(),
 
-    // MinIO (可選)
-    MINIO_ENDPOINT: z.string().optional(),
-    MINIO_PORT: z.string().optional(),
-    MINIO_USE_SSL: z.enum(["true", "false"]).optional(),
-    MINIO_ACCESS_KEY: z.string().optional(),
-    MINIO_SECRET_KEY: z.string().optional(),
-    MINIO_BUCKET_NAME: z.string().optional(),
+    // Vercel Blob
+    BLOB_READ_WRITE_TOKEN: z.string().optional(),
 
     // Email
     SMTP_HOST: z.string().optional(),
@@ -40,7 +37,6 @@ export const env = createEnv({
    */
   client: {
     NEXT_PUBLIC_API_URL: z.string().url(),
-    NEXT_PUBLIC_WS_URL: z.string().url(),
   },
 
   /**
@@ -50,15 +46,12 @@ export const env = createEnv({
   runtimeEnv: {
     // Server
     DATABASE_URL: process.env.DATABASE_URL,
+    DIRECT_URL: process.env.DIRECT_URL,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-    REDIS_URL: process.env.REDIS_URL,
-    MINIO_ENDPOINT: process.env.MINIO_ENDPOINT,
-    MINIO_PORT: process.env.MINIO_PORT,
-    MINIO_USE_SSL: process.env.MINIO_USE_SSL,
-    MINIO_ACCESS_KEY: process.env.MINIO_ACCESS_KEY,
-    MINIO_SECRET_KEY: process.env.MINIO_SECRET_KEY,
-    MINIO_BUCKET_NAME: process.env.MINIO_BUCKET_NAME,
+    KV_REST_API_URL: process.env.KV_REST_API_URL,
+    KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+    BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
     SMTP_HOST: process.env.SMTP_HOST,
     SMTP_PORT: process.env.SMTP_PORT,
     SMTP_USER: process.env.SMTP_USER,
@@ -68,7 +61,6 @@ export const env = createEnv({
 
     // Client
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
   },
 
   /**
