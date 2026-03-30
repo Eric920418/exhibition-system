@@ -1,11 +1,22 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 export default async function Home() {
+  // 檢查首頁重導向設定（優先於前台開關）
+  const redirectSetting = await prisma.systemSetting.findUnique({
+    where: { key: 'homepage_redirect_url' },
+  })
+
+  const redirectValue = redirectSetting?.value as { url?: string; enabled?: boolean } | null
+  if (redirectValue?.enabled && redirectValue?.url) {
+    redirect(redirectValue.url)
+  }
+
   // 檢查系統設置：前台是否開放
   const frontendSetting = await prisma.systemSetting.findUnique({
     where: { key: 'frontend_enabled' },

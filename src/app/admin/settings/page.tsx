@@ -5,12 +5,18 @@ import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 
 export default function SettingsPage() {
   const { toast } = useToast()
   const [frontendEnabled, setFrontendEnabled] = useState(false)
+  const [redirectUrl, setRedirectUrl] = useState('')
+  const [redirectEnabled, setRedirectEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [savingRedirect, setSavingRedirect] = useState(false)
 
   useEffect(() => {
     fetchSettings()
@@ -18,11 +24,23 @@ export default function SettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const data = await apiClient.get('/system-settings/frontend_enabled') as { enabled?: boolean }
-      setFrontendEnabled(data?.enabled || false)
-    } catch (error: any) {
-      // 如果設置不存在，默認為關閉
-      setFrontendEnabled(false)
+      const [feData, redirectData] = await Promise.allSettled([
+        apiClient.get('/system-settings/frontend_enabled'),
+        apiClient.get('/system-settings/homepage_redirect_url'),
+      ])
+
+      if (feData.status === 'fulfilled') {
+        const val = feData.value as { enabled?: boolean }
+        setFrontendEnabled(val?.enabled || false)
+      }
+
+      if (redirectData.status === 'fulfilled') {
+        const val = redirectData.value as { url?: string; enabled?: boolean }
+        setRedirectUrl(val?.url || '')
+        setRedirectEnabled(val?.enabled || false)
+      }
+    } catch {
+      // defaults already set
     } finally {
       setLoading(false)
     }
@@ -142,15 +160,91 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* 可以添加更多設置選項 */}
+        {/* 首頁重導向設定 */}
         <div className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>其他設置</CardTitle>
-              <CardDescription>更多系統設置選項即將推出</CardDescription>
+              <CardTitle>首頁重導向</CardTitle>
+              <CardDescription>
+                設定首頁自動跳轉到外部展覽官網。啟用後，訪客進入首頁將直接被重導向到指定的 URL。
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-500">敬請期待...</p>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <Label htmlFor="redirect-switch" className="text-base font-semibold cursor-pointer">
+                      啟用重導向
+                    </Label>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {redirectEnabled
+                        ? '首頁將自動跳轉到下方設定的網址'
+                        : '首頁顯示正常展覽內容'}
+                    </p>
+                  </div>
+                  <Switch
+                    id="redirect-switch"
+                    checked={redirectEnabled}
+                    onCheckedChange={setRedirectEnabled}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="redirect-url">目標網址</Label>
+                  <Input
+                    id="redirect-url"
+                    type="url"
+                    placeholder="https://2025.example.com"
+                    value={redirectUrl}
+                    onChange={(e) => setRedirectUrl(e.target.value)}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    每年展覽的官方網站網址，例如：https://2025.gradexhibit.tech
+                  </p>
+                </div>
+
+                <Button
+                  onClick={async () => {
+                    if (redirectEnabled && redirectUrl) {
+                      try {
+                        new URL(redirectUrl)
+                      } catch {
+                        toast({
+                          title: '網址格式錯誤',
+                          description: '請輸入有效的網址（包含 https://）',
+                          variant: 'destructive',
+                        })
+                        return
+                      }
+                    }
+
+                    setSavingRedirect(true)
+                    try {
+                      await apiClient.put('/system-settings/homepage_redirect_url', {
+                        url: redirectUrl,
+                        enabled: redirectEnabled,
+                      })
+                      toast({
+                        title: '設置已更新',
+                        description: redirectEnabled
+                          ? `首頁將重導向到 ${redirectUrl}`
+                          : '首頁重導向已停用',
+                      })
+                    } catch (error: any) {
+                      toast({
+                        title: '更新失敗',
+                        description: error.message || '操作失敗，請稍後再試',
+                        variant: 'destructive',
+                      })
+                    } finally {
+                      setSavingRedirect(false)
+                    }
+                  }}
+                  disabled={savingRedirect}
+                >
+                  {savingRedirect ? '儲存中...' : '儲存設定'}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
