@@ -17,14 +17,14 @@ export type ApiResponse<T = any> = {
 /**
  * 成功響應
  */
-export function apiSuccess<T>(data: T, message?: string, status = 200) {
+export function apiSuccess<T>(data: T, message?: string, status = 200, headers?: Record<string, string>) {
   return NextResponse.json<ApiResponse<T>>(
     {
       success: true,
       data,
       ...(message && { message }),
     },
-    { status }
+    { status, headers }
   )
 }
 

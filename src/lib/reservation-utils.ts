@@ -134,29 +134,21 @@ export async function getQueuePosition(
  * 獲取隊列統計資訊
  */
 export async function getQueueStats(teamId: string, date: Date) {
-  const [waiting, called, inProgress, completed, cancelled, noShow] =
-    await Promise.all([
-      prisma.reservation.count({
-        where: { teamId, reservationDate: date, status: 'WAITING' },
-      }),
-      prisma.reservation.count({
-        where: { teamId, reservationDate: date, status: 'CALLED' },
-      }),
-      prisma.reservation.count({
-        where: { teamId, reservationDate: date, status: 'IN_PROGRESS' },
-      }),
-      prisma.reservation.count({
-        where: { teamId, reservationDate: date, status: 'COMPLETED' },
-      }),
-      prisma.reservation.count({
-        where: { teamId, reservationDate: date, status: 'CANCELLED' },
-      }),
-      prisma.reservation.count({
-        where: { teamId, reservationDate: date, status: 'NO_SHOW' },
-      }),
-    ])
+  const groups = await prisma.reservation.groupBy({
+    by: ['status'],
+    where: { teamId, reservationDate: date },
+    _count: true,
+  })
 
-  const total = waiting + called + inProgress + completed + cancelled + noShow
+  const countByStatus = (status: string) =>
+    groups.find((g) => g.status === status)?._count ?? 0
+
+  const waiting = countByStatus('WAITING')
+  const called = countByStatus('CALLED')
+  const inProgress = countByStatus('IN_PROGRESS')
+  const completed = countByStatus('COMPLETED')
+  const cancelled = countByStatus('CANCELLED')
+  const noShow = countByStatus('NO_SHOW')
 
   return {
     waiting,
@@ -165,7 +157,7 @@ export async function getQueueStats(teamId: string, date: Date) {
     completed,
     cancelled,
     noShow,
-    total,
+    total: waiting + called + inProgress + completed + cancelled + noShow,
   }
 }
 

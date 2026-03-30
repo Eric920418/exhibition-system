@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import '@/styles/scroll-animations.css'
 import { scrollAnimate, scrollAnimateList } from '@/lib/scroll-animations'
@@ -148,11 +149,13 @@ export default async function ArtworksPage({ searchParams }: PageProps) {
                         className="w-full object-cover block"
                       />
                     ) : (
-                      <img
+                      <Image
                         src={thumbUrl}
                         alt={artwork.title}
+                        width={600}
+                        height={450}
                         className="w-full object-cover block"
-                        loading="lazy"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                     )
                   ) : (

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { validateApiKey, checkApiKeyRateLimit } from '@/lib/api-key'
+import { getOrSet, CACHE_TTL } from '@/lib/cache'
 
 /**
  * GET /api/public/artworks
@@ -54,51 +55,59 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    const [total, artworks] = await Promise.all([
-      prisma.artwork.count({ where }),
-      prisma.artwork.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
-        select: {
-          id: true,
-          title: true,
-          concept: true,
-          thumbnailUrl: true,
-          mediaUrls: true,
-          displayOrder: true,
-          createdAt: true,
-          updatedAt: true,
-          team: {
-            select: {
-              id: true,
-              name: true,
-              exhibition: {
-                select: { id: true, name: true, year: true },
+    const cacheKey = `api:public:artworks:${page}:${limit}:${teamId || ''}:${exhibitionId || ''}:${search || ''}`
+
+    const result = await getOrSet(cacheKey, async () => {
+      const [total, artworks] = await Promise.all([
+        prisma.artwork.count({ where }),
+        prisma.artwork.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
+          select: {
+            id: true,
+            title: true,
+            concept: true,
+            thumbnailUrl: true,
+            mediaUrls: true,
+            displayOrder: true,
+            createdAt: true,
+            updatedAt: true,
+            team: {
+              select: {
+                id: true,
+                name: true,
+                exhibition: {
+                  select: { id: true, name: true, year: true },
+                },
               },
             },
+            creator: {
+              select: { name: true },
+            },
           },
-          creator: {
-            select: { name: true },
-          },
+        }),
+      ])
+
+      const safeArtworks = artworks.map(({ creator, ...rest }) => ({
+        ...rest,
+        creatorName: creator?.name ?? null,
+      }))
+
+      return {
+        artworks: safeArtworks,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
         },
-      }),
-    ])
+      }
+    }, CACHE_TTL.MEDIUM)
 
-    const safeArtworks = artworks.map(({ creator, ...rest }) => ({
-      ...rest,
-      creatorName: creator?.name ?? null,
-    }))
-
-    return apiSuccess({
-      artworks: safeArtworks,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+    return apiSuccess(result, undefined, 200, {
+      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
     })
   } catch (error) {
     console.error('Public artworks API error:', error)

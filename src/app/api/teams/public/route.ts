@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleApiError } from '@/lib/api-response'
+import { getOrSet, CACHE_TTL } from '@/lib/cache'
 
 /**
  * GET /api/teams/public
@@ -13,83 +14,96 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const exhibitionId = searchParams.get('exhibitionId')
 
-    let targetExhibitionId = exhibitionId
+    const cacheKey = `api:teams:public:${exhibitionId || 'latest'}`
 
-    // 若未指定展覽，自動找最新已發布的展覽
-    if (!targetExhibitionId) {
-      const latestExhibition = await prisma.exhibition.findFirst({
-        where: { status: 'PUBLISHED' },
-        orderBy: { year: 'desc' },
-        select: { id: true },
-      })
+    const result = await getOrSet(cacheKey, async () => {
+      let targetExhibitionId = exhibitionId
 
-      if (!latestExhibition) {
-        return apiSuccess({ teams: [], exhibition: null })
+      // 若未指定展覽，自動找最新已發布的展覽
+      if (!targetExhibitionId) {
+        const latestExhibition = await prisma.exhibition.findFirst({
+          where: { status: 'PUBLISHED' },
+          orderBy: { year: 'desc' },
+          select: { id: true },
+        })
+
+        if (!latestExhibition) {
+          return { teams: [], exhibition: null }
+        }
+
+        targetExhibitionId = latestExhibition.id
       }
 
-      targetExhibitionId = latestExhibition.id
-    }
+      // 確認展覽存在且已發布
+      const exhibition = await prisma.exhibition.findFirst({
+        where: {
+          id: targetExhibitionId,
+          status: 'PUBLISHED',
+        },
+        select: {
+          id: true,
+          name: true,
+          year: true,
+          slug: true,
+        },
+      })
 
-    // 確認展覽存在且已發布
-    const exhibition = await prisma.exhibition.findFirst({
-      where: {
-        id: targetExhibitionId,
-        status: 'PUBLISHED',
-      },
-      select: {
-        id: true,
-        name: true,
-        year: true,
-        slug: true,
-      },
-    })
+      if (!exhibition) {
+        return null
+      }
 
-    if (!exhibition) {
+      const teams = await prisma.team.findMany({
+        where: { exhibitionId: targetExhibitionId },
+        orderBy: [
+          { displayOrder: 'asc' },
+          { createdAt: 'asc' },
+        ],
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          teamType: true,
+          description: true,
+          advisor: true,
+          displayOrder: true,
+          members: {
+            orderBy: { displayOrder: 'asc' },
+            select: {
+              id: true,
+              name: true,
+              role: true,
+            },
+          },
+          artworks: {
+            where: { isPublished: true },
+            orderBy: { displayOrder: 'asc' },
+            take: 5,
+            select: {
+              id: true,
+              title: true,
+              concept: true,
+              conceptShort: true,
+              thumbnailUrl: true,
+              mediaUrls: true,
+              displayOrder: true,
+            },
+          },
+          _count: {
+            select: { members: true },
+          },
+        },
+      })
+
+      return { teams, exhibition }
+    }, CACHE_TTL.MEDIUM)
+
+    if (result === null) {
       return apiError('找不到已發布的展覽', 404)
     }
 
-    const teams = await prisma.team.findMany({
-      where: { exhibitionId: targetExhibitionId },
-      orderBy: [
-        { displayOrder: 'asc' },
-        { createdAt: 'asc' },
-      ],
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        teamType: true,
-        description: true,
-        advisor: true,
-        displayOrder: true,
-        members: {
-          orderBy: { displayOrder: 'asc' },
-          select: {
-            id: true,
-            name: true,
-            role: true,
-          },
-        },
-        artworks: {
-          where: { isPublished: true },
-          orderBy: { displayOrder: 'asc' },
-          take: 5,
-          select: {
-            id: true,
-            title: true,
-            concept: true,
-            thumbnailUrl: true,
-            mediaUrls: true,
-            displayOrder: true,
-          },
-        },
-        _count: {
-          select: { members: true },
-        },
-      },
+    return apiSuccess(result, undefined, 200, {
+      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
     })
-
-    return apiSuccess({ teams, exhibition })
   } catch (error) {
     return handleApiError(error)
   }

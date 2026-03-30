@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
@@ -128,10 +129,13 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
       {/* 作品縮圖 */}
       {artwork.thumbnailUrl && (
         <div className="mb-6">
-          <img
+          <Image
             src={artwork.thumbnailUrl}
             alt={artwork.title}
+            width={800}
+            height={600}
             className="max-w-2xl w-full rounded-lg shadow"
+            sizes="(max-width: 768px) 100vw, 50vw"
           />
         </div>
       )}
@@ -213,10 +217,13 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
                       rel="noopener noreferrer"
                       className="block"
                     >
-                      <img
+                      <Image
                         src={url}
                         alt={`媒體 ${index + 1}`}
+                        width={400}
+                        height={256}
                         className="w-full h-64 object-cover rounded-lg shadow group-hover:shadow-lg transition-shadow"
+                        sizes="(max-width: 768px) 50vw, 33vw"
                       />
                     </a>
                   )}

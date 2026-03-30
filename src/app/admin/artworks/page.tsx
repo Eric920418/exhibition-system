@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
@@ -177,10 +178,13 @@ export default async function ArtworksPage({
           >
             <div className="aspect-square bg-gray-100 relative overflow-hidden">
               {artwork.thumbnailUrl ? (
-                <img
+                <Image
                   src={artwork.thumbnailUrl}
                   alt={artwork.title}
+                  width={400}
+                  height={400}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  sizes="(max-width: 768px) 50vw, 25vw"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">

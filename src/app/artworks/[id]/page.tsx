@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import '@/styles/scroll-animations.css'
@@ -138,10 +139,14 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
                 className="w-full max-h-[70vh] object-contain mx-auto block rounded-[15px]"
               />
             ) : (
-              <img
+              <Image
                 src={primaryUrl}
                 alt={artwork.title}
+                width={1200}
+                height={800}
                 className="w-full max-h-[70vh] object-contain mx-auto block rounded-[15px]"
+                priority
+                sizes="(max-width: 768px) 100vw, 80vw"
               />
             )}
           </div>
@@ -271,10 +276,13 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
                     className="w-full object-cover"
                   />
                 ) : (
-                  <img
+                  <Image
                     src={url}
                     alt={`${artwork.title} — 媒體 ${i + 1}`}
+                    width={800}
+                    height={600}
                     className="w-full object-cover"
+                    sizes="(max-width: 768px) 100vw, 50vw"
                     loading="lazy"
                   />
                 )}

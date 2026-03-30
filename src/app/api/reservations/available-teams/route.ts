@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, handleApiError } from '@/lib/api-response'
 import { getQueueStats, formatDateString } from '@/lib/reservation-utils'
+import { getOrSet } from '@/lib/cache'
 
 /**
  * GET /api/reservations/available-teams
@@ -63,46 +64,49 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // 為每個組別附加當前隊列狀態
-    const teamsWithStats = await Promise.all(
-      teams.map(async (team) => {
-        const dateObj = new Date(date + 'T00:00:00.000Z')
-        const stats = await getQueueStats(team.id, dateObj)
+    const cacheKey = `api:available-teams:${exhibitionId || 'all'}:${venueType || 'all'}:${date}`
 
-        // 計算預估等候時間
-        const config = team.reservationConfig!
-        const serviceTime = config.slotDurationMinutes
-        const capacity = config.maxConcurrentCapacity
-        const estimatedWait = Math.ceil(
-          (stats.waiting / capacity) * serviceTime
-        )
+    const result = await getOrSet(cacheKey, async () => {
+      const teamsWithStats = await Promise.all(
+        teams.map(async (team) => {
+          const dateObj = new Date(date + 'T00:00:00.000Z')
+          const stats = await getQueueStats(team.id, dateObj)
 
-        return {
-          id: team.id,
-          name: team.name,
-          slug: team.slug,
-          teamType: team.teamType,
-          description: team.description,
-          artworkTitle: team.artworks[0]?.title ?? null,
-          venueType: team.exhibition.venueType,
-          exhibition: team.exhibition,
-          config: {
-            slotDurationMinutes: config.slotDurationMinutes,
-            maxConcurrentCapacity: config.maxConcurrentCapacity,
-            dailyStartTime: formatTime(config.dailyStartTime),
-            dailyEndTime: formatTime(config.dailyEndTime),
-          },
-          queueStats: {
-            waiting: stats.waiting,
-            estimatedWaitMinutes: estimatedWait,
-          },
-        }
-      })
-    )
+          const config = team.reservationConfig!
+          const serviceTime = config.slotDurationMinutes
+          const capacity = config.maxConcurrentCapacity
+          const estimatedWait = Math.ceil(
+            (stats.waiting / capacity) * serviceTime
+          )
 
-    return apiSuccess({
-      teams: teamsWithStats,
-      date,
+          return {
+            id: team.id,
+            name: team.name,
+            slug: team.slug,
+            teamType: team.teamType,
+            description: team.description,
+            artworkTitle: team.artworks[0]?.title ?? null,
+            venueType: team.exhibition.venueType,
+            exhibition: team.exhibition,
+            config: {
+              slotDurationMinutes: config.slotDurationMinutes,
+              maxConcurrentCapacity: config.maxConcurrentCapacity,
+              dailyStartTime: formatTime(config.dailyStartTime),
+              dailyEndTime: formatTime(config.dailyEndTime),
+            },
+            queueStats: {
+              waiting: stats.waiting,
+              estimatedWaitMinutes: estimatedWait,
+            },
+          }
+        })
+      )
+
+      return { teams: teamsWithStats, date }
+    }, 30) // 30 秒 TTL
+
+    return apiSuccess(result, undefined, 200, {
+      'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
     })
   } catch (error) {
     return handleApiError(error)
