@@ -124,6 +124,41 @@ export async function invalidateTeamCache(teamId: string): Promise<void> {
 }
 
 /**
+ * Admin dashboard stats 快取鍵
+ */
+export function adminDashboardStatsKey(userId: string): string {
+  return RedisKeys.adminDashboardStats(userId)
+}
+
+/**
+ * Admin dashboard recent items 快取鍵
+ */
+export function adminDashboardRecentKey(userId: string): string {
+  return RedisKeys.adminDashboardRecent(userId)
+}
+
+/**
+ * Admin 展覽下拉選單快取鍵
+ */
+export function adminExhibitionDropdownKey(): string {
+  return RedisKeys.adminExhibitionDropdown()
+}
+
+/**
+ * 清除所有 Admin dashboard 快取（所有使用者）
+ */
+export async function invalidateAdminDashboard(): Promise<void> {
+  await invalidateCachePattern('cache:admin:dashboard:*')
+}
+
+/**
+ * 清除 Admin 下拉選單快取
+ */
+export async function invalidateAdminDropdowns(): Promise<void> {
+  await invalidateCache(adminExhibitionDropdownKey())
+}
+
+/**
  * 檢查 Redis 連線狀態
  */
 export async function checkRedisConnection(): Promise<boolean> {

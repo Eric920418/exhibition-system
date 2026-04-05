@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleApiError, requireAuth } from '@/lib/api-response'
 import { updateDocumentSchema } from '@/lib/validations/document'
 import { createAuditLog, AuditAction } from '@/lib/audit-log'
+import { invalidateAdminDashboard } from '@/lib/cache'
 
 /**
  * GET /api/documents/[id]
@@ -124,6 +125,8 @@ export async function PATCH(
       },
     })
 
+    await invalidateAdminDashboard()
+
     return apiSuccess(updatedDocument, '文件更新成功')
   } catch (error) {
     return handleApiError(error)
@@ -186,6 +189,8 @@ export async function DELETE(
         fileUrl: document.fileUrl,
       },
     })
+
+    await invalidateAdminDashboard()
 
     return apiSuccess(null, '文件刪除成功')
   } catch (error) {

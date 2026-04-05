@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleApiError, requireAuth } from '@/lib/api-response'
 import { createTeamSchema, teamQuerySchema } from '@/lib/validations/team'
 import { createAuditLog, AuditAction, extractRequestInfo } from '@/lib/audit-log'
+import { invalidateAdminDashboard } from '@/lib/cache'
 
 /**
  * GET /api/teams
@@ -180,6 +181,8 @@ export async function POST(request: NextRequest) {
       ipAddress,
       userAgent,
     })
+
+    await invalidateAdminDashboard()
 
     return apiSuccess(team, '團隊創建成功', 201)
   } catch (error) {

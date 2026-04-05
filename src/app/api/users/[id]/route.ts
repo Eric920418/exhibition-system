@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleApiError, requireAuth } from '@/lib/api-response'
 import { updateUserSchema } from '@/lib/validations/user'
 import { createAuditLog, AuditAction, extractRequestInfo } from '@/lib/audit-log'
+import { invalidateAdminDashboard } from '@/lib/cache'
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -159,6 +160,8 @@ export async function PATCH(
       userAgent,
     })
 
+    await invalidateAdminDashboard()
+
     return apiSuccess(updated, '用戶更新成功')
   } catch (error) {
     return handleApiError(error)
@@ -232,6 +235,8 @@ export async function DELETE(
       ipAddress,
       userAgent,
     })
+
+    await invalidateAdminDashboard()
 
     return apiSuccess({ id }, '用戶刪除成功')
   } catch (error) {

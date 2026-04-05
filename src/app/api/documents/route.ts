@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleApiError, requireAuth } from '@/lib/api-response'
 import { createDocumentSchema } from '@/lib/validations/document'
 import { createAuditLog, AuditAction } from '@/lib/audit-log'
+import { invalidateAdminDashboard } from '@/lib/cache'
 
 /**
  * GET /api/documents
@@ -148,6 +149,8 @@ export async function POST(request: NextRequest) {
         fileSize: document.fileSize,
       },
     })
+
+    await invalidateAdminDashboard()
 
     return apiSuccess(document, '文件記錄創建成功', 201)
   } catch (error) {

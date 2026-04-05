@@ -43,6 +43,11 @@ export const RedisKeys = {
   exhibitionPublic: (exhibitionId: string) => `cache:exhibition:${exhibitionId}`,
   teamArtworks: (teamId: string) => `cache:artworks:${teamId}`,
 
+  // Admin 後台快取 (TTL: 60s - 300s)
+  adminDashboardStats: (userId: string) => `cache:admin:dashboard:stats:${userId}`,
+  adminDashboardRecent: (userId: string) => `cache:admin:dashboard:recent:${userId}`,
+  adminExhibitionDropdown: () => `cache:admin:dropdown:exhibitions`,
+
   // SSE 事件列表 (TTL: 1天)
   sseEvents: (channel: string) => `sse:events:${channel}`,
   sseEventCounter: (channel: string) => `sse:counter:${channel}`,

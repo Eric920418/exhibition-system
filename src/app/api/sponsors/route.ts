@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleApiError, requireAuth } from '@/lib/api-response'
 import { createSponsorSchema, sponsorQuerySchema } from '@/lib/validations/sponsor'
 import { createAuditLog, AuditAction, extractRequestInfo } from '@/lib/audit-log'
+import { invalidateAdminDashboard } from '@/lib/cache'
 
 /**
  * GET /api/sponsors
@@ -138,6 +139,8 @@ export async function POST(request: NextRequest) {
       ipAddress,
       userAgent,
     })
+
+    await invalidateAdminDashboard()
 
     return apiSuccess(sponsor, '贊助商創建成功', 201)
   } catch (error) {

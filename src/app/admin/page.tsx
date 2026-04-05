@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import { getOrSet, CACHE_TTL, adminDashboardStatsKey, adminDashboardRecentKey } from '@/lib/cache'
 
 export default async function AdminDashboard() {
   const session = await auth()
@@ -14,113 +15,102 @@ export default async function AdminDashboard() {
 
   // 根據角色構建查詢條件
   const isSuperAdmin = session.user.role === 'SUPER_ADMIN'
-  const exhibitionWhere = isSuperAdmin ? {} : { createdBy: session.user.id }
+  const userId = session.user.id
+  const exhibitionWhere = isSuperAdmin ? {} : { createdBy: userId }
 
-  // 獲取統計數據
-  const [
-    userCount,
-    exhibitionCount,
-    teamCount,
-    artworkCount,
-    sponsorCount,
-    venueCount,
-    documentCount,
-    exhibitionsByStatus,
-    recentExhibitions,
-    recentArtworks,
-  ] = await Promise.all([
-    prisma.user.count(),
-    prisma.exhibition.count({ where: exhibitionWhere }),
-    prisma.team.count({
-      where: isSuperAdmin
-        ? {}
-        : {
-            exhibition: { createdBy: session.user.id },
-          },
-    }),
-    prisma.artwork.count({
-      where: isSuperAdmin
-        ? {}
-        : {
-            team: {
-              exhibition: { createdBy: session.user.id },
-            },
-          },
-    }),
-    prisma.sponsor.count({
-      where: isSuperAdmin
-        ? {}
-        : {
-            exhibition: { createdBy: session.user.id },
-          },
-    }),
-    prisma.venue.count({
-      where: isSuperAdmin
-        ? {}
-        : {
-            exhibition: { createdBy: session.user.id },
-          },
-    }),
-    prisma.document.count({
-      where: isSuperAdmin
-        ? {}
-        : {
-            exhibition: { createdBy: session.user.id },
-          },
-    }),
-    // 展覽狀態分布
-    Promise.all([
-      prisma.exhibition.count({
-        where: { ...exhibitionWhere, status: 'PUBLISHED' },
-      }),
-      prisma.exhibition.count({
-        where: { ...exhibitionWhere, status: 'DRAFT' },
-      }),
-      prisma.exhibition.count({
-        where: { ...exhibitionWhere, status: 'ARCHIVED' },
-      }),
-    ]),
-    // 最近的展覽
-    prisma.exhibition.findMany({
-      where: exhibitionWhere,
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        year: true,
-        status: true,
-        createdAt: true,
-      },
-    }),
-    // 最近的作品
-    prisma.artwork.findMany({
-      where: isSuperAdmin
-        ? {}
-        : {
-            team: {
-              exhibition: { createdBy: session.user.id },
-            },
-          },
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        thumbnailUrl: true,
-        isPublished: true,
-        createdAt: true,
-        team: {
+  // 獲取統計數據（Redis 快取 60 秒）
+  const stats = await getOrSet(
+    adminDashboardStatsKey(userId),
+    async () => {
+      const [
+        userCount,
+        exhibitionCount,
+        teamCount,
+        artworkCount,
+        sponsorCount,
+        venueCount,
+        documentCount,
+        publishedCount,
+        draftCount,
+        archivedCount,
+      ] = await Promise.all([
+        prisma.user.count(),
+        prisma.exhibition.count({ where: exhibitionWhere }),
+        prisma.team.count({
+          where: isSuperAdmin ? {} : { exhibition: { createdBy: userId } },
+        }),
+        prisma.artwork.count({
+          where: isSuperAdmin ? {} : { team: { exhibition: { createdBy: userId } } },
+        }),
+        prisma.sponsor.count({
+          where: isSuperAdmin ? {} : { exhibition: { createdBy: userId } },
+        }),
+        prisma.venue.count({
+          where: isSuperAdmin ? {} : { exhibition: { createdBy: userId } },
+        }),
+        prisma.document.count({
+          where: isSuperAdmin ? {} : { exhibition: { createdBy: userId } },
+        }),
+        prisma.exhibition.count({ where: { ...exhibitionWhere, status: 'PUBLISHED' } }),
+        prisma.exhibition.count({ where: { ...exhibitionWhere, status: 'DRAFT' } }),
+        prisma.exhibition.count({ where: { ...exhibitionWhere, status: 'ARCHIVED' } }),
+      ])
+      return {
+        userCount, exhibitionCount, teamCount, artworkCount,
+        sponsorCount, venueCount, documentCount,
+        publishedCount, draftCount, archivedCount,
+      }
+    },
+    CACHE_TTL.SHORT
+  )
+
+  // 獲取最近項目（Redis 快取 60 秒）
+  const recent = await getOrSet(
+    adminDashboardRecentKey(userId),
+    async () => {
+      const [recentExhibitions, recentArtworks] = await Promise.all([
+        prisma.exhibition.findMany({
+          where: exhibitionWhere,
+          take: 5,
+          orderBy: { createdAt: 'desc' },
           select: {
             id: true,
             name: true,
+            year: true,
+            status: true,
+            createdAt: true,
           },
-        },
-      },
-    }),
-  ])
+        }),
+        prisma.artwork.findMany({
+          where: isSuperAdmin ? {} : { team: { exhibition: { createdBy: userId } } },
+          take: 5,
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            title: true,
+            thumbnailUrl: true,
+            isPublished: true,
+            createdAt: true,
+            team: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        }),
+      ])
+      return { recentExhibitions, recentArtworks }
+    },
+    CACHE_TTL.SHORT
+  )
 
-  const [publishedCount, draftCount, archivedCount] = exhibitionsByStatus
+  const {
+    userCount, exhibitionCount, teamCount, artworkCount,
+    sponsorCount, venueCount, documentCount,
+    publishedCount, draftCount, archivedCount,
+  } = stats
+  const { recentExhibitions, recentArtworks } = recent
 
   return (
     <div className="p-4 md:p-8 pt-20 md:pt-8">

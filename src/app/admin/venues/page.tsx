@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import { getOrSet, CACHE_TTL, adminExhibitionDropdownKey } from '@/lib/cache'
 
 interface SearchParams {
   page?: string
@@ -58,16 +59,16 @@ export default async function VenuesPage({
 
   const totalPages = Math.ceil(total / limit)
 
-  // 獲取展覽列表用於篩選
-  const exhibitions = await prisma.exhibition.findMany({
-    select: {
-      id: true,
-      name: true,
-      year: true,
-    },
-    orderBy: { year: 'desc' },
-    take: 20,
-  })
+  // 獲取展覽列表用於篩選（Redis 快取 5 分鐘）
+  const exhibitions = await getOrSet(
+    adminExhibitionDropdownKey(),
+    () => prisma.exhibition.findMany({
+      select: { id: true, name: true, year: true },
+      orderBy: { year: 'desc' },
+      take: 20,
+    }),
+    CACHE_TTL.MEDIUM
+  )
 
   return (
     <div className="p-4 md:p-8 pt-20 md:pt-8">

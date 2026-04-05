@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleApiError, requireAuth } from '@/lib/api-response'
 import { updateArtworkSchema } from '@/lib/validations/artwork'
+import { invalidateAdminDashboard } from '@/lib/cache'
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -153,6 +154,8 @@ export async function PATCH(
       },
     })
 
+    await invalidateAdminDashboard()
+
     return apiSuccess(updated, '作品更新成功')
   } catch (error) {
     return handleApiError(error)
@@ -208,6 +211,8 @@ export async function DELETE(
     await prisma.artwork.delete({
       where: { id },
     })
+
+    await invalidateAdminDashboard()
 
     return apiSuccess({ id }, '作品刪除成功')
   } catch (error) {

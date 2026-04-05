@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleApiError, requireAuth } from '@/lib/api-response'
 import { createArtworkSchema, artworkQuerySchema } from '@/lib/validations/artwork'
+import { invalidateAdminDashboard } from '@/lib/cache'
 
 /**
  * GET /api/artworks
@@ -171,6 +172,8 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+
+    await invalidateAdminDashboard()
 
     return apiSuccess(artwork, '作品創建成功', 201)
   } catch (error) {

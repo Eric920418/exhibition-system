@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleApiError, requireAuth } from '@/lib/api-response'
 import { createUserSchema, userQuerySchema } from '@/lib/validations/user'
 import { createAuditLog, AuditAction, extractRequestInfo } from '@/lib/audit-log'
+import { invalidateAdminDashboard } from '@/lib/cache'
 
 /**
  * GET /api/users
@@ -154,6 +155,8 @@ export async function POST(request: NextRequest) {
       ipAddress,
       userAgent,
     })
+
+    await invalidateAdminDashboard()
 
     return apiSuccess(user, '用戶創建成功', 201)
   } catch (error) {

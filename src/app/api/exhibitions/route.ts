@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleApiError, requireAuth } from '@/lib/api-response'
 import { createExhibitionSchema, exhibitionQuerySchema } from '@/lib/validations/exhibition'
 import { createAuditLog, AuditAction, extractRequestInfo } from '@/lib/audit-log'
+import { invalidateAdminDashboard, invalidateAdminDropdowns } from '@/lib/cache'
 
 /**
  * GET /api/exhibitions
@@ -157,6 +158,8 @@ export async function POST(request: NextRequest) {
       ipAddress,
       userAgent,
     })
+
+    await Promise.all([invalidateAdminDashboard(), invalidateAdminDropdowns()])
 
     return apiSuccess(exhibition, '展覽創建成功', 201)
   } catch (error) {

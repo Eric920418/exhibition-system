@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleApiError, requireAuth } from '@/lib/api-response'
 import { createVenueSchema, venueQuerySchema } from '@/lib/validations/venue'
 import { createAuditLog, AuditAction, extractRequestInfo } from '@/lib/audit-log'
+import { invalidateAdminDashboard } from '@/lib/cache'
 
 /**
  * GET /api/venues
@@ -131,6 +132,8 @@ export async function POST(request: NextRequest) {
       ipAddress,
       userAgent,
     })
+
+    await invalidateAdminDashboard()
 
     return apiSuccess(venue, '場地創建成功', 201)
   } catch (error) {
