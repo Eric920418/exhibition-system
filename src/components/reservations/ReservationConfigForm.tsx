@@ -6,12 +6,21 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
 
 interface ReservationConfigFormProps {
   teamId: string
   teamName: string
+  exhibitionId: string
+  venueType: 'INDOOR' | 'OUTDOOR' | null
   config?: {
     id: string
     slotDurationMinutes: number
@@ -27,12 +36,17 @@ interface ReservationConfigFormProps {
 export default function ReservationConfigForm({
   teamId,
   teamName,
+  exhibitionId,
+  venueType,
   config,
   mode,
 }: ReservationConfigFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [selectedVenueType, setSelectedVenueType] = useState<string>(
+    venueType || ''
+  )
 
   const [formData, setFormData] = useState({
     slotDurationMinutes: config?.slotDurationMinutes ?? 15,
@@ -58,6 +72,13 @@ export default function ReservationConfigForm({
     setLoading(true)
 
     try {
+      // 如果 venueType 有變更，先更新展覽的 venueType
+      if (selectedVenueType && selectedVenueType !== venueType) {
+        await apiClient.patch(`/exhibitions/${exhibitionId}`, {
+          venueType: selectedVenueType,
+        })
+      }
+
       const payload = {
         ...formData,
         ...(mode === 'create' && { teamId }),
@@ -96,6 +117,28 @@ export default function ReservationConfigForm({
       <div className="bg-gray-50 rounded-lg p-4">
         <p className="text-sm text-gray-500">設定組別</p>
         <p className="text-lg font-medium">{teamName}</p>
+      </div>
+
+      {/* 展覽類型（校內展/校外展） */}
+      <div className="space-y-2">
+        <Label htmlFor="venueType">
+          展覽類型 <span className="text-red-500">*</span>
+        </Label>
+        <Select
+          value={selectedVenueType}
+          onValueChange={setSelectedVenueType}
+        >
+          <SelectTrigger id="venueType">
+            <SelectValue placeholder="請選擇展覽類型" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="INDOOR">校內展</SelectItem>
+            <SelectItem value="OUTDOOR">校外展</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-sm text-muted-foreground">
+          設定此組別所屬展覽為校內展或校外展
+        </p>
       </div>
 
       {/* 時段設定 */}

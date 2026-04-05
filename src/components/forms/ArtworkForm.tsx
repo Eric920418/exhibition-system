@@ -15,6 +15,7 @@ interface ArtworkFormProps {
     id: string
     title: string
     concept?: string | null
+    conceptShort?: string | null
     mediaUrls: string[]
     thumbnailUrl?: string | null
     displayOrder: number
@@ -44,6 +45,7 @@ export default function ArtworkForm({ artwork, teamId, teamInfo, mode }: Artwork
 
   const [formData, setFormData] = useState({
     title: artwork?.title || '',
+    conceptShort: artwork?.conceptShort || '',
     concept: artwork?.concept || '',
     displayOrder: artwork?.displayOrder ?? 0,
     isPublished: artwork?.isPublished ?? false,
@@ -114,6 +116,7 @@ export default function ArtworkForm({ artwork, teamId, teamInfo, mode }: Artwork
     try {
       const payload: any = {
         title: formData.title,
+        conceptShort: formData.conceptShort || null,
         concept: formData.concept || null,
         thumbnailUrl: thumbnailUrl || null,
         mediaUrls,
@@ -183,15 +186,34 @@ export default function ArtworkForm({ artwork, teamId, teamInfo, mode }: Artwork
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="concept">作品概念</Label>
+            <Label htmlFor="conceptShort">作品簡介（短）</Label>
+            <Textarea
+              id="conceptShort"
+              name="conceptShort"
+              value={formData.conceptShort}
+              onChange={handleChange}
+              rows={2}
+              maxLength={500}
+              placeholder="簡短描述作品（500 字以內），顯示於作品列表卡片"
+            />
+            <p className="text-sm text-muted-foreground">
+              {formData.conceptShort.length}/500 字 · 可直接貼上網址，會自動轉為超連結
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="concept">作品介紹（長）</Label>
             <Textarea
               id="concept"
               name="concept"
               value={formData.concept}
               onChange={handleChange}
-              rows={4}
-              placeholder="描述作品的創作理念、背景等..."
+              rows={6}
+              placeholder="完整描述作品的創作理念、背景、技術等..."
             />
+            <p className="text-sm text-muted-foreground">
+              可直接貼上網址，會自動轉為超連結
+            </p>
           </div>
 
           {/* 縮圖上傳 */}

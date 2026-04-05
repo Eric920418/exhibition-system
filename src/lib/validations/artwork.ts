@@ -8,6 +8,7 @@ export const createArtworkSchema = z.object({
   teamId: z.string().uuid('無效的團隊 ID'),
   title: z.string().min(1, '作品標題不可為空').max(255, '作品標題過長'),
   concept: z.string().nullable().optional(),
+  conceptShort: z.string().max(500, '作品簡介不可超過 500 字').nullable().optional(),
   mediaUrls: z.array(z.string().min(1)).default([]),
   thumbnailUrl: z.string().min(1).nullable().optional(),
   displayOrder: z.number().int().min(0).optional().default(0),
