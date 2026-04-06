@@ -24,22 +24,23 @@ const ALLOWED_CONTENT_TYPES = [
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
-    requireAuth(session)
-
     const body = (await request.json()) as HandleUploadBody
 
     const jsonResponse = await handleUpload({
       body,
       request,
       onBeforeGenerateToken: async () => {
+        // 僅在瀏覽器請求 token 時驗證登入（Vercel 回呼不帶 cookie）
+        const session = await auth()
+        requireAuth(session)
+
         return {
           allowedContentTypes: ALLOWED_CONTENT_TYPES,
           maximumSizeInBytes: 500 * 1024 * 1024, // 500MB
         }
       },
       onUploadCompleted: async () => {
-        // 上傳完成，不需額外處理
+        // Vercel 伺服器回呼，不需驗證登入
       },
     })
 
