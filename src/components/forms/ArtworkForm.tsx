@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { upload } from '@vercel/blob/client'
 import { apiClient } from '@/lib/api-client'
 import { useToast } from '@/hooks/use-toast'
 import { Input } from '@/components/ui/input'
@@ -61,17 +62,12 @@ export default function ArtworkForm({ artwork, teamId, teamInfo, mode }: Artwork
 
   const teamDisplay = artwork?.team ?? teamInfo
 
-  async function uploadFile(file: File, type: 'image' | 'video'): Promise<string> {
-    const fd = new FormData()
-    fd.append('file', file)
-    fd.append('type', type)
-    const res = await fetch('/api/upload', { method: 'POST', body: fd })
-    if (!res.ok) {
-      const err = await res.json()
-      throw new Error(err.error || '上傳失敗')
-    }
-    const result = await res.json()
-    return result.data.fileUrl
+  async function uploadFile(file: File): Promise<string> {
+    const blob = await upload(file.name, file, {
+      access: 'public',
+      handleUploadUrl: '/api/upload',
+    })
+    return blob.url
   }
 
   const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,7 +75,7 @@ export default function ArtworkForm({ artwork, teamId, teamInfo, mode }: Artwork
     if (!file) return
     setUploadingThumbnail(true)
     try {
-      const url = await uploadFile(file, 'image')
+      const url = await uploadFile(file)
       setThumbnailUrl(url)
     } catch (error: any) {
       toast({ title: '縮圖上傳失敗', description: error.message, variant: 'destructive' })
@@ -96,8 +92,7 @@ export default function ArtworkForm({ artwork, teamId, teamInfo, mode }: Artwork
     try {
       const urls: string[] = []
       for (const file of files) {
-        const type = file.type.startsWith('video/') ? 'video' : 'image'
-        const url = await uploadFile(file, type)
+        const url = await uploadFile(file)
         urls.push(url)
       }
       setMediaUrls((prev) => [...prev, ...urls])

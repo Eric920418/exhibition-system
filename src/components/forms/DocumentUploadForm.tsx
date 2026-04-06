@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { upload } from '@vercel/blob/client'
 import { apiClient } from '@/lib/api-client'
 import { useToast } from '@/hooks/use-toast'
 
@@ -67,24 +68,11 @@ export default function DocumentUploadForm({ exhibitionId }: DocumentUploadFormP
     setUploading(true)
 
     try {
-      // 步驟 1: 上傳檔案到 MinIO
-      const uploadFormData = new FormData()
-      uploadFormData.append('file', selectedFile)
-      uploadFormData.append('type', 'document')
-      uploadFormData.append('relatedId', exhibitionId)
-      uploadFormData.append('relatedType', 'exhibition')
-
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: uploadFormData,
+      // 步驟 1: 上傳檔案到 Vercel Blob
+      const blob = await upload(selectedFile.name, selectedFile, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
       })
-
-      if (!uploadResponse.ok) {
-        const error = await uploadResponse.json()
-        throw new Error(error.error || '檔案上傳失敗')
-      }
-
-      const uploadResult = await uploadResponse.json()
       setUploading(false)
 
       // 步驟 2: 創建文件記錄
@@ -92,9 +80,9 @@ export default function DocumentUploadForm({ exhibitionId }: DocumentUploadFormP
         exhibitionId,
         type: formData.type,
         title: formData.title,
-        fileUrl: uploadResult.data.fileUrl,
-        fileSize: uploadResult.data.fileSize,
-        mimeType: uploadResult.data.fileType,
+        fileUrl: blob.url,
+        fileSize: selectedFile.size,
+        mimeType: selectedFile.type,
         version: formData.version,
       })
 

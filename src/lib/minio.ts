@@ -1,7 +1,4 @@
-import { writeFile, unlink, mkdir } from 'fs/promises'
-import path from 'path'
-
-const UPLOAD_DIR = path.join(process.cwd(), 'public')
+import { put, del } from '@vercel/blob'
 
 /**
  * 檔案類型限制
@@ -68,38 +65,20 @@ export function validateFileSize(size: number, category: 'image' | 'video' | 'do
 }
 
 /**
- * 上傳檔案到本機檔案系統
+ * 上傳檔案到 Vercel Blob
  */
 export async function uploadFile(
   file: Buffer | File | ReadableStream,
   fileName: string,
   mimeType: string,
 ): Promise<string> {
-  const filePath = path.join(UPLOAD_DIR, fileName)
-  const dir = path.dirname(filePath)
-  await mkdir(dir, { recursive: true })
+  const blob = await put(fileName, file, {
+    access: 'public',
+    contentType: mimeType,
+    addRandomSuffix: false,
+  })
 
-  let buffer: Buffer
-  if (file instanceof File) {
-    const arrayBuffer = await file.arrayBuffer()
-    buffer = Buffer.from(arrayBuffer)
-  } else if (Buffer.isBuffer(file)) {
-    buffer = file
-  } else {
-    const chunks: Uint8Array[] = []
-    const reader = (file as ReadableStream).getReader()
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      chunks.push(value)
-    }
-    buffer = Buffer.concat(chunks)
-  }
-
-  await writeFile(filePath, buffer)
-
-  // 回傳 URL 路徑（nginx 將 /uploads/ 對應到 public/uploads/）
-  return `/${fileName}`
+  return blob.url
 }
 
 /**
@@ -107,8 +86,7 @@ export async function uploadFile(
  */
 export async function deleteFile(fileUrl: string): Promise<void> {
   try {
-    const filePath = path.join(UPLOAD_DIR, fileUrl.replace(/^\//, ''))
-    await unlink(filePath)
+    await del(fileUrl)
   } catch (error) {
     console.error('檔案刪除失敗:', error)
     throw new Error('檔案刪除失敗')
@@ -116,7 +94,7 @@ export async function deleteFile(fileUrl: string): Promise<void> {
 }
 
 /**
- * 獲取檔案 URL
+ * 獲取檔案 URL（Vercel Blob URL 直接可存取）
  */
 export async function getPresignedUrl(fileUrl: string): Promise<string> {
   return fileUrl
