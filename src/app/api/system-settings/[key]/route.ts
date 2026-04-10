@@ -19,7 +19,7 @@ export async function GET(
     })
 
     if (!setting) {
-      return apiError('設置不存在', 404)
+      return apiSuccess(null)
     }
 
     return apiSuccess(setting.value)
@@ -40,10 +40,8 @@ export async function PUT(
     const session = await auth()
     const user = requireAuth(session)
 
-    // 只有超級管理員可以修改系統設置
-    if (user.role !== 'SUPER_ADMIN') {
-      return apiError('沒有權限修改系統設置', 403)
-    }
+    // 所有登入的管理員都可以修改系統設置
+    // （後台本身已有 auth guard，只有管理員能進入）
 
     const { key } = await params
     const body = await request.json()
