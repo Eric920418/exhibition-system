@@ -248,6 +248,7 @@ export default function TeamForm({ team, exhibitionId, leaders = [], mode }: Tea
                 <SelectItem value="互動">互動</SelectItem>
                 <SelectItem value="影視">影視</SelectItem>
                 <SelectItem value="行銷">行銷</SelectItem>
+                <SelectItem value="動畫">動畫</SelectItem>
               </SelectContent>
             </Select>
           </div>
