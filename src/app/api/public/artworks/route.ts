@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
                 name: true,
                 advisor: true,
                 instagramUrl: true,
+                bookingUrl: true,
                 exhibition: {
                   select: { id: true, name: true, year: true },
                 },

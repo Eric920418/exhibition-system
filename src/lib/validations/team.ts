@@ -17,6 +17,10 @@ export const createTeamSchema = z.object({
     (v) => (v === '' ? null : v),
     z.string().url('無效的 Instagram 網址').max(255).nullable().optional()
   ),
+  bookingUrl: z.preprocess(
+    (v) => (v === '' ? null : v),
+    z.string().url('無效的預約連結').max(255).nullable().optional()
+  ),
   teamType: z.enum(['遊戲', '互動', '影視', '行銷', '動畫']).nullable().optional(),
   displayOrder: z.number().int().min(0).optional().default(0),
 })
@@ -33,6 +37,10 @@ export const updateTeamSchema = z.object({
   instagramUrl: z.preprocess(
     (v) => (v === '' ? null : v),
     z.string().url('無效的 Instagram 網址').max(255).nullable().optional()
+  ),
+  bookingUrl: z.preprocess(
+    (v) => (v === '' ? null : v),
+    z.string().url('無效的預約連結').max(255).nullable().optional()
   ),
   teamType: z.enum(['遊戲', '互動', '影視', '行銷', '動畫']).nullable().optional(),
   displayOrder: z.number().int().min(0).optional(),

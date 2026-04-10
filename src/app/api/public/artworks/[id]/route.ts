@@ -57,6 +57,7 @@ export async function GET(
             name: true,
             advisor: true,
             instagramUrl: true,
+            bookingUrl: true,
             exhibition: {
               select: { id: true, name: true, year: true },
             },
