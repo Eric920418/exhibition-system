@@ -18,6 +18,7 @@ interface TeamFormProps {
     leaderId?: string | null
     description?: string | null
     advisor?: string | null
+    instagramUrl?: string | null
     teamType?: string | null
     displayOrder: number
     exhibitionId: string
@@ -38,6 +39,7 @@ export default function TeamForm({ team, exhibitionId, leaders = [], mode }: Tea
     leaderId: team?.leaderId || '',
     description: team?.description || '',
     advisor: team?.advisor || '',
+    instagramUrl: team?.instagramUrl || '',
     teamType: team?.teamType || '',
     displayOrder: team?.displayOrder || 0,
   })
@@ -53,6 +55,7 @@ export default function TeamForm({ team, exhibitionId, leaders = [], mode }: Tea
         leaderId: formData.leaderId || null,
         description: formData.description || null,
         advisor: formData.advisor || null,
+        instagramUrl: formData.instagramUrl || null,
         teamType: formData.teamType || null,
         displayOrder: Number(formData.displayOrder),
       }
@@ -213,6 +216,21 @@ export default function TeamForm({ team, exhibitionId, leaders = [], mode }: Tea
               onChange={handleChange}
               placeholder="請輸入指導老師姓名"
             />
+          </div>
+
+          <div className="col-span-2 space-y-2">
+            <Label htmlFor="instagramUrl">Instagram 連結</Label>
+            <Input
+              id="instagramUrl"
+              type="url"
+              name="instagramUrl"
+              value={formData.instagramUrl}
+              onChange={handleChange}
+              placeholder="https://instagram.com/your-team"
+            />
+            <p className="text-sm text-muted-foreground">
+              完整的 Instagram URL，留空表示無
+            </p>
           </div>
 
           <div className="space-y-2">

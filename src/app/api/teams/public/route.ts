@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
           teamType: true,
           description: true,
           advisor: true,
+          instagramUrl: true,
           displayOrder: true,
           members: {
             orderBy: { displayOrder: 'asc' },

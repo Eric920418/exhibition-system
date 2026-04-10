@@ -13,6 +13,10 @@ export const createTeamSchema = z.object({
   leaderId: z.string().uuid('無效的組長 ID').nullable().optional(),
   description: z.string().nullable().optional(),
   advisor: z.string().max(255).nullable().optional(),
+  instagramUrl: z.preprocess(
+    (v) => (v === '' ? null : v),
+    z.string().url('無效的 Instagram 網址').max(255).nullable().optional()
+  ),
   teamType: z.enum(['遊戲', '互動', '影視', '行銷']).nullable().optional(),
   displayOrder: z.number().int().min(0).optional().default(0),
 })
@@ -26,6 +30,10 @@ export const updateTeamSchema = z.object({
   leaderId: z.string().uuid().nullable().optional(),
   description: z.string().nullable().optional(),
   advisor: z.string().max(255).nullable().optional(),
+  instagramUrl: z.preprocess(
+    (v) => (v === '' ? null : v),
+    z.string().url('無效的 Instagram 網址').max(255).nullable().optional()
+  ),
   teamType: z.enum(['遊戲', '互動', '影視', '行銷']).nullable().optional(),
   displayOrder: z.number().int().min(0).optional(),
 })

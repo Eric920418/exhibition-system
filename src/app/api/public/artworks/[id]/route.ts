@@ -55,6 +55,8 @@ export async function GET(
           select: {
             id: true,
             name: true,
+            advisor: true,
+            instagramUrl: true,
             exhibition: {
               select: { id: true, name: true, year: true },
             },

@@ -78,6 +78,8 @@ export async function GET(request: NextRequest) {
               select: {
                 id: true,
                 name: true,
+                advisor: true,
+                instagramUrl: true,
                 exhibition: {
                   select: { id: true, name: true, year: true },
                 },
